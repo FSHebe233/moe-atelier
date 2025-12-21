@@ -62,8 +62,8 @@ PORT=8080 npm run start
 ## 目录结构
 - `src/`：前端源码
 - `server.mjs`：本地服务（开发中挂载 Vite，中生产提供静态资源与 `/api/save-image`）
-- `dist/`：构建产物（已提交）
-- `saved-images/`：本地保存图片目录（自动创建，**不提交**）
+- `dist/`：构建产物
+- `saved-images/`：本地保存图片目录（自动创建）
 
 ## 注意事项
 - 仅支持 OpenAI 兼容格式；响应中需包含 base64 或图片 URL。

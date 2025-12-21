@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  app:
+    build: .
+    ports:
+      - "5173:5173"
+    environment:
+      - PORT=5173
+    volumes:
+      - saved-images:/app/saved-images
+    restart: unless-stopped
+
+volumes:
+  saved-images:
