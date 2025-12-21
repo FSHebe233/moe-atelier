@@ -1,0 +1,238 @@
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=Varela+Round&family=Nunito:wght@400;600;700;800&display=swap');
+
+:root {
+  /* 萌系糖果配色板 3.0 */
+  --c-bg: #FFF9FA; /* 极淡的粉白背景 */
+  --c-bg-card: #FFFFFF;
+  --c-bg-input: #FFFFFF; /* 改为纯白 */
+  
+  /* 主色调 - 樱花粉 */
+  --c-primary: #FF9EB5; 
+  --c-primary-hover: #FF85A1;
+  --c-primary-active: #FF7090;
+  --c-primary-light: #FFF0F3;
+  
+  /* 辅助色 */
+  --c-success: #A7E8BD; /* 马卡龙绿 */
+  --c-success-dark: #6BCB8A;
+  --c-warning: #FFE5A0; /* 奶油黄 */
+  --c-warning-dark: #FFC857;
+  --c-error: #FFB3C1; /* 柔和红 */
+  --c-error-dark: #FF8FA3;
+  --c-info: #A0E1E8; /* 婴儿蓝 */
+  
+  /* 文字颜色 - 暖灰色 */
+  --c-text-main: #665555;
+  --c-text-light: #998888;
+  --c-text-white: #FFFFFF;
+
+  /* 布局变量 */
+  --radius-sm: 12px;
+  --radius-md: 20px;
+  --radius-lg: 32px;
+  --radius-xl: 40px;
+  
+  /* 柔和阴影 */
+  --shadow-xs: 0 2px 8px rgba(255, 158, 181, 0.1);
+  --shadow-sm: 0 4px 12px rgba(255, 158, 181, 0.15);
+  --shadow-md: 0 8px 24px rgba(255, 158, 181, 0.12);
+  --shadow-lg: 0 16px 40px rgba(255, 158, 181, 0.15);
+  --shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+  
+  /* 字体 */
+  --font-stack: 'Nunito', 'Quicksand', 'Varela Round', system-ui, -apple-system, sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--c-bg);
+  color: var(--c-text-main);
+  font-family: var(--font-stack);
+  -webkit-font-smoothing: antialiased;
+  /* 可爱的波点背景 */
+  background-image: 
+    radial-gradient(var(--c-primary-light) 20%, transparent 20%),
+    radial-gradient(var(--c-primary-light) 20%, transparent 20%);
+  background-size: 40px 40px;
+  background-position: 0 0, 20px 20px;
+  overflow-x: hidden;
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent; 
+}
+::-webkit-scrollbar-thumb {
+  background: #FFD1DC; 
+  border-radius: 10px;
+  border: 2px solid var(--c-bg);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--c-primary); 
+}
+
+/* 动画类 */
+.fade-in-up {
+  animation: fadeInUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  opacity: 0;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.hover-scale {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.hover-scale:hover {
+  transform: scale(1.02);
+}
+
+/* 通用卡片样式 */
+.moe-card {
+  background: var(--c-bg-card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  border: 2px solid #FFF;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.moe-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+/* 统计面板样式优化 */
+.stat-panel {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  transition: all 0.3s ease;
+  background: transparent;
+}
+
+.stat-item:hover {
+  background: var(--c-bg);
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--c-text-main);
+  line-height: 1.2;
+  font-family: 'Nunito', sans-serif;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--c-text-light);
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+/* Ant Design 深度定制 */
+.ant-btn {
+  border-radius: var(--radius-lg) !important;
+  font-weight: 700 !important;
+  border: none !important;
+  box-shadow: none !important;
+  height: auto !important;
+  padding: 8px 20px !important;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+.ant-btn-primary {
+  background: var(--c-primary) !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(255, 158, 181, 0.4) !important;
+}
+
+.ant-btn-primary:hover {
+  background: var(--c-primary-hover) !important;
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 6px 16px rgba(255, 158, 181, 0.5) !important;
+}
+
+.ant-btn-default {
+  background: #fff !important;
+  color: var(--c-text-main) !important;
+  border: 2px solid #F0F0F0 !important;
+}
+
+.ant-btn-default:hover {
+  border-color: var(--c-primary) !important;
+  color: var(--c-primary) !important;
+}
+
+.ant-input, .ant-input-textarea, .ant-input-number-input {
+  border-radius: var(--radius-sm) !important;
+  background-color: var(--c-bg-input) !important;
+  border: 2px solid #F0F0F0 !important; /* 添加淡边框 */
+  color: var(--c-text-main) !important;
+  font-weight: 600;
+  padding: 10px 16px !important;
+}
+
+.ant-input:focus, .ant-input-textarea:focus {
+  background-color: #fff !important;
+  border-color: var(--c-primary) !important;
+  box-shadow: 0 0 0 4px var(--c-primary-light) !important;
+}
+
+.ant-input::placeholder {
+  color: #D0C0C0;
+}
+
+/* 移动端适配优化 */
+@media (max-width: 768px) {
+  .stat-panel {
+    padding: 12px;
+  }
+  
+  .stat-value {
+    font-size: 20px;
+  }
+  
+  .ant-drawer-content-wrapper {
+    width: 100% !important;
+  }
+  
+  .mobile-hidden {
+    display: none !important;
+  }
+
+  .desktop-hidden {
+    display: inline-flex !important;
+  }
+  
+  .mobile-compact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+}
+
+@media (min-width: 769px) {
+  .desktop-hidden {
+    display: none !important;
+  }
+}
