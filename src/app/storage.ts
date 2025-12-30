@@ -62,6 +62,9 @@ export const loadTasks = (): TaskConfig[] => {
     const uniqueIds = Array.from(
       new Set(data.filter((item: unknown) => typeof item === 'string')),
     );
+    if (uniqueIds.length === 0) {
+      return [{ id: uuidv4(), prompt: '' }];
+    }
     return uniqueIds.map((id) => ({ id, prompt: '' }));
   } catch (err) {
     console.warn('Failed to parse tasks cache:', err);

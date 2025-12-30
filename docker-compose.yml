@@ -9,7 +9,9 @@ services:
       - PORT=5173
     volumes:
       - saved-images:/app/saved-images
+      - server-data:/app/server-data
     restart: unless-stopped
 
 volumes:
   saved-images:
+  server-data:

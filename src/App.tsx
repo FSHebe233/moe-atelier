@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Layout, Button, Form, Input, Switch, Row, Col, Typography, Space, ConfigProvider, Drawer, AutoComplete, message, Tooltip } from 'antd';
 import { 
   PlusOutlined, 
@@ -11,7 +11,9 @@ import {
   AppstoreFilled,
   ExperimentFilled,
   SafetyCertificateFilled,
-  ReloadOutlined
+  ReloadOutlined,
+  DeleteFilled,
+  KeyOutlined
 } from '@ant-design/icons';
 import {
   DndContext, 
@@ -53,13 +55,34 @@ import {
 import { safeStorageSet } from './utils/storage';
 import { calculateSuccessRate, formatDuration } from './utils/stats';
 import { TASK_STATE_VERSION, saveTaskState, DEFAULT_TASK_STATS } from './components/imageTaskState';
+import {
+  authBackend,
+  clearBackendToken,
+  deleteBackendTask,
+  fetchBackendState,
+  getBackendMode,
+  getBackendToken,
+  buildBackendStreamUrl,
+  patchBackendState,
+  putBackendTask,
+  setBackendMode as persistBackendMode,
+  setBackendToken,
+} from './utils/backendApi';
 
 const { Header, Content } = Layout;
 const { Title, Text } = Typography;
+const EMPTY_GLOBAL_STATS: GlobalStats = {
+  totalRequests: 0,
+  successCount: 0,
+  fastestTime: 0,
+  slowestTime: 0,
+  totalTime: 0,
+};
 
 interface SortableTaskItemProps {
   task: TaskConfig;
   config: AppConfig;
+  backendMode: boolean;
   onRemove: (id: string) => void;
   onStatsUpdate: (type: 'request' | 'success' | 'fail', duration?: number) => void;
 }
@@ -67,7 +90,7 @@ interface SortableTaskItemProps {
 const animateLayoutChanges: AnimateLayoutChanges = (args) =>
   defaultAnimateLayoutChanges({ ...args, wasDragging: true });
 
-const SortableTaskItem = ({ task, config, onRemove, onStatsUpdate }: SortableTaskItemProps) => {
+const SortableTaskItem = ({ task, config, backendMode, onRemove, onStatsUpdate }: SortableTaskItemProps) => {
   const {
     attributes,
     listeners,
@@ -99,6 +122,7 @@ const SortableTaskItem = ({ task, config, onRemove, onStatsUpdate }: SortableTas
           id={task.id}
           storageKey={getTaskStorageKey(task.id)}
           config={config}
+          backendMode={backendMode}
           onRemove={() => onRemove(task.id)}
           onStatsUpdate={onStatsUpdate}
           dragAttributes={attributes}
@@ -110,8 +134,11 @@ const SortableTaskItem = ({ task, config, onRemove, onStatsUpdate }: SortableTas
 };
 
 function App() {
+  const initialBackendMode = getBackendMode() && Boolean(getBackendToken());
   const [config, setConfig] = useState<AppConfig>(() => loadConfig());
-  const [tasks, setTasks] = useState<TaskConfig[]>(() => loadTasks());
+  const [tasks, setTasks] = useState<TaskConfig[]>(() =>
+    initialBackendMode ? [] : loadTasks(),
+  );
   const [globalStats, setGlobalStats] = useState<GlobalStats>(() => loadGlobalStats());
   const [configVisible, setConfigVisible] = useState(false);
   const [promptDrawerVisible, setPromptDrawerVisible] = useState(false);
@@ -120,6 +147,14 @@ function App() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeItemWidth, setActiveItemWidth] = useState<number | undefined>(undefined);
   const [form] = Form.useForm();
+  const [backendMode, setBackendModeState] = useState<boolean>(() => initialBackendMode);
+  const [backendAuthPending, setBackendAuthPending] = useState(false);
+  const [backendPassword, setBackendPassword] = useState('');
+  const [backendAuthLoading, setBackendAuthLoading] = useState(false);
+  const [backendSyncing, setBackendSyncing] = useState(false);
+  const backendApplyingRef = useRef(false);
+  const backendBootstrappedRef = useRef(false);
+  const backendReadyRef = useRef(false);
 
   const sensors = useSensors(
     useSensor(MouseSensor),
@@ -200,30 +235,197 @@ function App() {
     },
   };
 
+  const applyBackendState = useCallback(
+    (state: { config: AppConfig; tasksOrder: string[]; globalStats: GlobalStats }) => {
+      backendApplyingRef.current = true;
+      backendReadyRef.current = true;
+      if (state?.config) {
+        setConfig(state.config);
+      }
+      const order = Array.isArray(state?.tasksOrder) ? state.tasksOrder : [];
+      setTasks(order.map((id) => ({ id, prompt: '' })));
+      if (state?.globalStats) {
+        setGlobalStats(state.globalStats);
+      }
+      window.setTimeout(() => {
+        backendApplyingRef.current = false;
+      }, 200);
+    },
+    [form],
+  );
+
+  const bootstrapBackendState = useCallback(async () => {
+    setBackendSyncing(true);
+    try {
+      const state = await fetchBackendState();
+      if (state.tasksOrder.length === 0) {
+        await patchBackendState({ config });
+        applyBackendState({ ...state, config });
+        const newTaskId = uuidv4();
+        await putBackendTask(newTaskId, {
+          version: TASK_STATE_VERSION,
+          prompt: '',
+          concurrency: 2,
+          enableSound: true,
+          results: [],
+          uploads: [],
+          stats: DEFAULT_TASK_STATS,
+        });
+        await patchBackendState({ tasksOrder: [newTaskId] });
+        setTasks([{ id: newTaskId, prompt: '' }]);
+        return;
+      }
+      applyBackendState(state);
+    } catch (err: any) {
+      console.error(err);
+      message.error('后端模式初始化失败，请检查密码或服务状态');
+      clearBackendToken();
+      persistBackendMode(false);
+      setBackendModeState(false);
+    } finally {
+      setBackendSyncing(false);
+    }
+  }, [applyBackendState, config]);
+
+  const handleBackendEnable = () => {
+    setBackendPassword('');
+    setBackendAuthPending(true);
+  };
+
+  const handleBackendDisable = () => {
+    setBackendAuthPending(false);
+    setBackendPassword('');
+    clearBackendToken();
+    persistBackendMode(false);
+    setBackendModeState(false);
+    const localConfig = loadConfig();
+    setConfig(localConfig);
+    setTasks(loadTasks());
+    setGlobalStats(loadGlobalStats());
+  };
+
+  const handleBackendAuthConfirm = async () => {
+    if (!backendPassword) {
+      message.warning('请输入后端密码');
+      return;
+    }
+    setBackendAuthLoading(true);
+    try {
+      const token = await authBackend(backendPassword);
+      setBackendToken(token);
+      persistBackendMode(true);
+      setBackendModeState(true);
+      setBackendAuthPending(false);
+      setBackendPassword('');
+    } catch (err: any) {
+      console.error(err);
+      message.error('后端密码错误或服务器不可用');
+    } finally {
+      setBackendAuthLoading(false);
+    }
+  };
+
+  const handleBackendAuthCancel = () => {
+    setBackendAuthPending(false);
+    setBackendPassword('');
+  };
+
+  React.useEffect(() => {
+    if (!configVisible) return;
+    form.setFieldsValue(config);
+  }, [configVisible, config, form]);
+
+  React.useEffect(() => {
+    if (!backendMode) {
+      backendBootstrappedRef.current = false;
+      backendReadyRef.current = false;
+      return;
+    }
+    if (backendBootstrappedRef.current) return;
+    backendBootstrappedRef.current = true;
+    void bootstrapBackendState();
+  }, [backendMode, bootstrapBackendState]);
+
   React.useEffect(() => {
     if (typeof navigator === 'undefined' || !navigator.storage?.persist) return;
     navigator.storage.persist().catch(() => undefined);
   }, []);
 
   React.useEffect(() => {
+    if (backendMode) {
+      if (!backendReadyRef.current) return;
+      if (backendApplyingRef.current) return;
+      void patchBackendState({ config }).catch((err) => {
+        console.warn('后端配置同步失败:', err);
+      });
+      return;
+    }
     safeStorageSet(STORAGE_KEYS.config, JSON.stringify(config), 'app cache');
-  }, [config]);
+  }, [config, backendMode]);
 
   React.useEffect(() => {
+    if (backendMode) {
+      if (!backendReadyRef.current) return;
+      if (backendApplyingRef.current) return;
+      void patchBackendState({ tasksOrder: tasks.map((task: TaskConfig) => task.id) }).catch((err) => {
+        console.warn('后端任务列表同步失败:', err);
+      });
+      return;
+    }
     safeStorageSet(
       STORAGE_KEYS.tasks,
       JSON.stringify(tasks.map((task: TaskConfig) => task.id)),
       'app cache',
     );
-  }, [tasks]);
+  }, [tasks, backendMode]);
 
   React.useEffect(() => {
+    if (backendMode) {
+      if (!backendReadyRef.current) return;
+      if (backendApplyingRef.current) return;
+      void patchBackendState({ globalStats }).catch((err) => {
+        console.warn('后端统计同步失败:', err);
+      });
+      return;
+    }
     safeStorageSet(
       STORAGE_KEYS.globalStats,
       JSON.stringify(globalStats),
       'app cache',
     );
-  }, [globalStats]);
+  }, [globalStats, backendMode]);
+
+  React.useEffect(() => {
+    if (!backendMode) return;
+    const streamUrl = buildBackendStreamUrl();
+    const source = new EventSource(streamUrl);
+    const handleState = (event: MessageEvent) => {
+      try {
+        const payload = JSON.parse(event.data || '{}');
+        applyBackendState(payload);
+      } catch (err) {
+        console.warn('解析后端状态事件失败:', err);
+      }
+    };
+    const handleTask = (event: MessageEvent) => {
+      try {
+        const payload = JSON.parse(event.data || '{}');
+        window.dispatchEvent(new CustomEvent('backend-task-update', { detail: payload }));
+      } catch (err) {
+        console.warn('解析后端任务事件失败:', err);
+      }
+    };
+    source.addEventListener('state', handleState as EventListener);
+    source.addEventListener('task', handleTask as EventListener);
+    source.onerror = () => {
+      console.warn('后端事件流断开，等待自动重连');
+    };
+    return () => {
+      source.removeEventListener('state', handleState as EventListener);
+      source.removeEventListener('task', handleTask as EventListener);
+      source.close();
+    };
+  }, [backendMode, applyBackendState]);
 
   const fetchModels = async () => {
     const currentConfig = form.getFieldsValue();
@@ -276,7 +478,22 @@ function App() {
   }, [configVisible]);
 
   const handleAddTask = () => {
-    setTasks([...tasks, { id: uuidv4(), prompt: '' }]);
+    const newTaskId = uuidv4();
+    if (backendMode) {
+      void putBackendTask(newTaskId, {
+        version: TASK_STATE_VERSION,
+        prompt: '',
+        concurrency: 2,
+        enableSound: true,
+        results: [],
+        uploads: [],
+        stats: DEFAULT_TASK_STATS,
+      }).catch((err) => {
+        console.error(err);
+        message.error('创建后端任务失败');
+      });
+    }
+    setTasks([...tasks, { id: newTaskId, prompt: '' }]);
   };
 
   const handleCreateTaskFromPrompt = (prompt: string) => {
@@ -284,22 +501,44 @@ function App() {
     
     // Pre-save task state with prompt
     const storageKey = getTaskStorageKey(newTaskId);
-    saveTaskState(storageKey, {
-      version: TASK_STATE_VERSION,
-      prompt: prompt,
-      // If we could handle image upload here we would, but for now just prompt
-      concurrency: 2,
-      enableSound: true,
-      results: [],
-      uploads: [],
-      stats: DEFAULT_TASK_STATS,
-    });
+    if (backendMode) {
+      void putBackendTask(newTaskId, {
+        version: TASK_STATE_VERSION,
+        prompt: prompt,
+        concurrency: 2,
+        enableSound: true,
+        results: [],
+        uploads: [],
+        stats: DEFAULT_TASK_STATS,
+      }).catch((err) => {
+        console.error(err);
+        message.error('创建后端任务失败');
+      });
+    } else {
+      saveTaskState(storageKey, {
+        version: TASK_STATE_VERSION,
+        prompt: prompt,
+        // If we could handle image upload here we would, but for now just prompt
+        concurrency: 2,
+        enableSound: true,
+        results: [],
+        uploads: [],
+        stats: DEFAULT_TASK_STATS,
+      });
+    }
 
     setTasks([...tasks, { id: newTaskId, prompt }]);
   };
 
   const handleRemoveTask = (id: string) => {
-    void cleanupTaskCache(getTaskStorageKey(id));
+    if (backendMode) {
+      void deleteBackendTask(id).catch((err) => {
+        console.error(err);
+        message.error('删除后端任务失败');
+      });
+    } else {
+      void cleanupTaskCache(getTaskStorageKey(id));
+    }
     setTasks(tasks.filter((t: TaskConfig) => t.id !== id));
   };
 
@@ -325,6 +564,11 @@ function App() {
     });
   }, []);
 
+  const handleClearGlobalStats = () => {
+    setGlobalStats({ ...EMPTY_GLOBAL_STATS });
+    message.success('数据总览统计已清空');
+  };
+
   const successRate = calculateSuccessRate(
     globalStats.totalRequests,
     globalStats.successCount,
@@ -337,6 +581,7 @@ function App() {
   const fastestTimeStr = formatDuration(globalStats.fastestTime);
 
   const slowestTimeStr = formatDuration(globalStats.slowestTime);
+  const backendSwitchChecked = backendMode || backendAuthPending;
 
   return (
     <ConfigProvider
@@ -461,11 +706,36 @@ function App() {
           
           {/* 数据仪表盘 - 重新设计 */}
           <div className="fade-in-up" style={{ marginBottom: 32 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, paddingLeft: 4 }}>
-              <AppstoreFilled style={{ fontSize: 18, color: '#FF9EB5' }} />
-              <Text style={{ fontSize: 18, fontWeight: 800, color: '#665555' }}>
-                数据总览
-              </Text>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 8,
+                flexWrap: 'wrap',
+                marginBottom: 16,
+                paddingLeft: 4,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <AppstoreFilled style={{ fontSize: 18, color: '#FF9EB5' }} />
+                <Text style={{ fontSize: 18, fontWeight: 800, color: '#665555' }}>
+                  数据总览
+                </Text>
+              </div>
+              <Button
+                size="small"
+                icon={<DeleteFilled />}
+                onClick={handleClearGlobalStats}
+                disabled={backendSyncing}
+                style={{ 
+                  background: 'rgba(255,255,255,0.6)', 
+                  border: '1px solid #FF9EB5',
+                  color: '#FF9EB5' 
+                }}
+              >
+                清空统计
+              </Button>
             </div>
             
             <div className="stat-panel">
@@ -579,6 +849,7 @@ function App() {
                     key={task.id} 
                     task={task} 
                     config={config}
+                    backendMode={backendMode}
                     onRemove={handleRemoveTask}
                     onStatsUpdate={updateGlobalStats}
                   />
@@ -598,6 +869,7 @@ function App() {
                       id={activeId}
                       storageKey={getTaskStorageKey(activeId)}
                       config={config}
+                      backendMode={backendMode}
                       onRemove={() => handleRemoveTask(activeId)}
                       onStatsUpdate={updateGlobalStats}
                       dragAttributes={{}}
@@ -629,7 +901,12 @@ function App() {
             </Space>
           }
           placement="right"
-          onClose={() => setConfigVisible(false)}
+          onClose={() => {
+            setConfigVisible(false);
+            if (backendAuthPending) {
+              handleBackendAuthCancel();
+            }
+          }}
           open={configVisible}
           width={400}
           styles={{ body: { padding: 24 } }}
@@ -695,6 +972,72 @@ function App() {
               </Form.Item>
             </div>
 
+            <div style={{ background: '#F1F7FF', padding: '16px', borderRadius: 16, marginBottom: 24, border: '1px dashed #91C1FF' }}>
+              <Form.Item 
+                label={<span style={{ fontWeight: 700, color: '#665555' }}>后端模式</span>}
+                style={{ marginBottom: 8 }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
+                  <Text type="secondary" style={{ fontSize: 13, flex: 1 }}>
+                    开启后将配置与任务缓存到服务器，支持多端同步
+                  </Text>
+                  <Switch
+                    checked={backendSwitchChecked}
+                    loading={backendSyncing}
+                    disabled={backendAuthLoading}
+                    onChange={(checked) => {
+                      if (checked) {
+                        if (!backendMode) {
+                          handleBackendEnable();
+                        }
+                      } else {
+                        if (backendMode) {
+                          handleBackendDisable();
+                        } else {
+                          handleBackendAuthCancel();
+                        }
+                      }
+                    }}
+                  />
+                </div>
+              </Form.Item>
+              <div style={{ marginTop: 16 }}>
+                <Text type="secondary" style={{ fontSize: 12, color: '#6B7280', lineHeight: 1.5, display: 'block' }}>
+                  需要在服务端 .env 中设置 BACKEND_PASSWORD。开启后生图请求将由服务器执行并自动缓存。
+                </Text>
+              </div>
+              <div className={`password-collapse-container ${backendAuthPending && !backendMode ? 'open' : ''}`}>
+                <div className="password-content-wrapper">
+                  <Space direction="vertical" size={8} style={{ width: '100%' }}>
+                    <Text type="secondary" style={{ fontSize: 12, color: '#6B7280' }}>
+                      请输入 .env 中配置的 BACKEND_PASSWORD。
+                    </Text>
+                    <Input.Password
+                      size="large"
+                      value={backendPassword}
+                      placeholder="后端密码"
+                      prefix={<KeyOutlined style={{ color: '#FF9EB5', fontSize: 18 }} />}
+                      onChange={(e) => setBackendPassword(e.target.value)}
+                      onPressEnter={() => void handleBackendAuthConfirm()}
+                    />
+                    <Space size={8}>
+                      <Button
+                        size="small"
+                        onClick={() => void handleBackendAuthConfirm()}
+                        loading={backendAuthLoading}
+                        type="primary"
+                      >
+                        验证
+                      </Button>
+                      <Button size="small" type="text" onClick={handleBackendAuthCancel}>
+                        取消
+                      </Button>
+                    </Space>
+                  </Space>
+                </div>
+              </div>
+            </div>
+
             <div style={{ marginTop: 24, padding: 16, background: '#FFF8E1', borderRadius: 16, border: '1px dashed #FFC107' }}>
               <Space align="start">
                 <ThunderboltFilled style={{ color: '#FFC107', marginTop: 4, fontSize: 16 }} />
@@ -705,6 +1048,7 @@ function App() {
             </div>
           </Form>
         </Drawer>
+
       </Layout>
     </ConfigProvider>
   );

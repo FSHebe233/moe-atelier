@@ -93,6 +93,36 @@ body {
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+/* 平滑展开/收起动画 - 使用 Grid 技巧 */
+.password-collapse-container {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), margin-top 0.3s ease;
+  overflow: hidden;
+  margin-top: 0;
+}
+
+.password-collapse-container.open {
+  grid-template-rows: 1fr;
+  margin-top: 16px;
+}
+
+.password-content-wrapper {
+  overflow: hidden;
+  min-height: 0;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px dashed #FF9EB5;
+  padding: 0 12px;
+  opacity: 0;
+  transition: opacity 0.3s ease, padding 0.3s ease;
+}
+
+.password-collapse-container.open .password-content-wrapper {
+  opacity: 1;
+  padding: 12px;
+}
+
 .hover-scale {
   transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -220,10 +250,36 @@ body {
   padding: 10px 16px !important;
 }
 
+/* 修复带前缀/后缀输入框的双层边框问题 */
+.ant-input-affix-wrapper {
+  border-radius: var(--radius-sm) !important;
+  background-color: var(--c-bg-input) !important;
+  border: 2px solid #F0F0F0 !important;
+  padding: 8px 11px !important;
+}
+
+.ant-input-affix-wrapper:hover, .ant-input-affix-wrapper:focus, .ant-input-affix-wrapper-focused {
+  border-color: var(--c-primary) !important;
+  box-shadow: 0 0 0 4px var(--c-primary-light) !important;
+}
+
+/* 当 input 在 wrapper 内部时，移除其边框和背景 */
+.ant-input-affix-wrapper .ant-input {
+  border: none !important;
+  background: transparent !important;
+  padding: 0 0 0 8px !important; /* 增加左侧内边距，让光标不紧贴图标 */
+  margin: 0 !important;
+  color: var(--c-text-main) !important; /* 确保文字颜色正确 */
+}
+
 .ant-input:focus, .ant-input-textarea:focus {
   background-color: #fff !important;
   border-color: var(--c-primary) !important;
   box-shadow: 0 0 0 4px var(--c-primary-light) !important;
+}
+
+.ant-input-affix-wrapper .ant-input:focus {
+  box-shadow: none !important;
 }
 
 .ant-input::placeholder {

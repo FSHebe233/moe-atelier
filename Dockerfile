@@ -19,7 +19,7 @@ RUN npm ci --omit=dev
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/server.mjs ./server.mjs
 
-RUN mkdir -p saved-images
+RUN mkdir -p saved-images server-data
 EXPOSE 5173
 
 CMD ["node", "server.mjs", "--prod"]

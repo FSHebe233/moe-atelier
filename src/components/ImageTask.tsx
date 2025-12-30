@@ -28,6 +28,17 @@ import { getBase64 } from '../utils/file';
 import { parseMarkdownImage, resolveImageFromResponse } from '../utils/imageResponse';
 import { openImageDb, IMAGE_STORE_NAME } from '../utils/imageDb';
 import { calculateSuccessRate, formatDuration } from '../utils/stats';
+import {
+  buildBackendImageUrl,
+  fetchBackendTask,
+  generateBackendTask,
+  getBackendToken,
+  patchBackendTask,
+  retryBackendSubTask,
+  stopBackendSubTask,
+  uploadBackendImage,
+  stripBackendToken,
+} from '../utils/backendApi';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -36,6 +47,7 @@ interface ImageTaskProps {
   id: string;
   storageKey: string;
   config: AppConfig;
+  backendMode: boolean;
   onRemove: () => void;
   onStatsUpdate: (type: 'request' | 'success' | 'fail', duration?: number) => void;
   dragAttributes?: any;
@@ -48,12 +60,13 @@ type UploadFileWithMeta = UploadFile & {
   lastModified?: number;
 };
 
-const normalizeStoredResult = (item: PersistedSubTaskResult): SubTaskResult => {
+const normalizeStoredResult = (item: PersistedSubTaskResult, backendMode: boolean): SubTaskResult => {
   const wasLoading = item.status === 'loading' || item.status === 'pending';
+  const shouldMarkInterrupted = wasLoading && !backendMode;
   return {
     id: item.id,
-    status: wasLoading ? 'error' : item.status,
-    error: wasLoading ? '刷新后已中断' : item.error,
+    status: shouldMarkInterrupted ? 'error' : item.status,
+    error: shouldMarkInterrupted ? '刷新后已中断' : item.error,
     retryCount: typeof item.retryCount === 'number' ? item.retryCount : 0,
     startTime: item.startTime,
     endTime: item.endTime,
@@ -77,7 +90,17 @@ const serializeUploads = (uploads: UploadFileWithMeta[]): PersistedUploadImage[]
       localKey: file.localKey as string,
     }));
 
-const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, onRemove, onStatsUpdate, dragAttributes, dragListeners }: ImageTaskProps) => {
+const normalizeUploadsPayload = (uploads: PersistedUploadImage[] = []) =>
+  uploads.map((item) => ({
+    uid: item.uid,
+    name: item.name,
+    type: item.type,
+    size: item.size,
+    lastModified: item.lastModified,
+    localKey: item.localKey,
+  }));
+
+const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, backendMode, onRemove, onStatsUpdate, dragAttributes, dragListeners }: ImageTaskProps) => {
   const [prompt, setPrompt] = useState('');
   const [fileList, setFileList] = useState<UploadFileWithMeta[]>([]);
   const [concurrency, setConcurrency] = useState<number>(2);
@@ -97,23 +120,110 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, onRemove,
   const objectUrlMapRef = useRef<Map<string, string>>(new Map());
   const uploadKeysRef = useRef<Map<string, string>>(new Map());
   const cachedUploadKeysRef = useRef<Set<string>>(new Set());
+  const backendPersistTimerRef = useRef<number | null>(null);
+  const backendLastPayloadRef = useRef<string>('');
+
+  const withBackendToken = (url: string) => {
+    const cleaned = stripBackendToken(url);
+    const token = getBackendToken();
+    if (!token) return cleaned;
+    return cleaned.includes('?')
+      ? `${cleaned}&token=${encodeURIComponent(token)}`
+      : `${cleaned}?token=${encodeURIComponent(token)}`;
+  };
+
+  const resolveBackendDisplayUrl = (localKey?: string, sourceUrl?: string) => {
+    if (localKey) {
+      return buildBackendImageUrl(localKey);
+    }
+    if (sourceUrl) {
+      return sourceUrl.includes('/api/backend/image/')
+        ? withBackendToken(sourceUrl)
+        : sourceUrl;
+    }
+    return undefined;
+  };
+
+  const applyBackendTaskState = (
+    stored: PersistedImageTaskState,
+    options: { preserveUploads?: boolean } = {},
+  ) => {
+    const nextPrompt = stored.prompt ?? '';
+    const nextConcurrency = typeof stored.concurrency === 'number' ? stored.concurrency : 2;
+    const nextEnableSound = typeof stored.enableSound === 'boolean' ? stored.enableSound : true;
+    const storedUploads = Array.isArray(stored.uploads) ? stored.uploads : [];
+    backendLastPayloadRef.current = JSON.stringify({
+      prompt: nextPrompt,
+      concurrency: Math.min(10, Math.max(1, nextConcurrency)),
+      enableSound: nextEnableSound,
+      uploads: normalizeUploadsPayload(storedUploads),
+    });
+
+    setPrompt(nextPrompt);
+    setConcurrency(Math.min(10, Math.max(1, nextConcurrency)));
+    setEnableSound(nextEnableSound);
+    setStats({ ...DEFAULT_TASK_STATS, ...(stored.stats || {}) });
+
+    const storedResults = Array.isArray(stored.results) ? stored.results : [];
+    const hydratedResults = storedResults.map((item) => {
+      const normalized = normalizeStoredResult(item, true);
+      if (normalized.sourceUrl && normalized.sourceUrl.includes('/api/backend/image/')) {
+        normalized.sourceUrl = stripBackendToken(normalized.sourceUrl);
+      }
+      normalized.displayUrl = resolveBackendDisplayUrl(
+        normalized.localKey,
+        normalized.sourceUrl,
+      );
+      return normalized;
+    });
+    setResults(hydratedResults);
+
+    if (!options.preserveUploads) {
+      const hydratedUploads: UploadFileWithMeta[] = storedUploads.map((item) => ({
+        uid: item.uid,
+        name: item.name,
+        status: 'done',
+        size: item.size,
+        type: item.type,
+        lastModified: item.lastModified,
+        localKey: item.localKey,
+        thumbUrl: item.localKey ? buildBackendImageUrl(item.localKey) : undefined,
+      }));
+      setFileList(hydratedUploads);
+    }
+  };
 
   useEffect(() => {
     let isActive = true;
     const hydrate = async () => {
+      if (backendMode) {
+        objectUrlMapRef.current.forEach((url) => URL.revokeObjectURL(url));
+        objectUrlMapRef.current.clear();
+        try {
+          const stored = await fetchBackendTask(id);
+          if (stored && isActive) {
+            applyBackendTaskState(stored);
+          }
+        } catch (err) {
+          console.warn('后端任务初始化失败:', err);
+        }
+        if (isActive) {
+          setHydrated(true);
+        }
+        return;
+      }
+
       const stored = loadTaskState(storageKey);
       if (stored) {
         setPrompt(stored.prompt ?? '');
         const nextConcurrency = typeof stored.concurrency === 'number' ? stored.concurrency : 2;
         setConcurrency(Math.min(10, Math.max(1, nextConcurrency)));
         setEnableSound(typeof stored.enableSound === 'boolean' ? stored.enableSound : true);
-        if (stored.stats) {
-          setStats({ ...DEFAULT_TASK_STATS, ...stored.stats });
-        }
+        setStats({ ...DEFAULT_TASK_STATS, ...(stored.stats || {}) });
         const storedResults = Array.isArray(stored.results) ? stored.results : [];
         const hydratedResults: SubTaskResult[] = [];
         for (const item of storedResults) {
-          const normalized = normalizeStoredResult(item);
+          const normalized = normalizeStoredResult(item, false);
           if (normalized.localKey) {
             const blob = await getImageBlob(normalized.localKey);
             if (blob) {
@@ -171,7 +281,7 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, onRemove,
     return () => {
       isActive = false;
     };
-  }, [storageKey]);
+  }, [storageKey, backendMode, id]);
 
   useEffect(() => {
     audioRef.current = new Audio(SUCCESS_AUDIO_SRC);
@@ -182,11 +292,15 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, onRemove,
       objectUrlMapRef.current.forEach((url: string) => URL.revokeObjectURL(url));
       objectUrlMapRef.current.clear();
       taskStartTimesRef.current.clear();
+      if (backendPersistTimerRef.current) {
+        clearTimeout(backendPersistTimerRef.current);
+        backendPersistTimerRef.current = null;
+      }
     };
   }, []);
 
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated || backendMode) return;
     const payload: PersistedImageTaskState = {
       version: TASK_STATE_VERSION,
       prompt,
@@ -197,10 +311,62 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, onRemove,
       stats,
     };
     saveTaskState(storageKey, payload);
-  }, [prompt, concurrency, enableSound, results, stats, storageKey, hydrated, fileList]);
+  }, [prompt, concurrency, enableSound, results, stats, storageKey, hydrated, fileList, backendMode]);
 
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated || !backendMode) return;
+    if (backendPersistTimerRef.current) {
+      clearTimeout(backendPersistTimerRef.current);
+    }
+    const payloadUploads = normalizeUploadsPayload(serializeUploads(fileList));
+    const payload: Partial<PersistedImageTaskState> = {
+      prompt,
+      concurrency,
+      enableSound,
+      uploads: payloadUploads,
+    };
+    const payloadKey = JSON.stringify(payload);
+    if (payloadKey === backendLastPayloadRef.current) {
+      return;
+    }
+    backendLastPayloadRef.current = payloadKey;
+    backendPersistTimerRef.current = window.setTimeout(() => {
+      void patchBackendTask(id, payload).catch((err) => {
+        console.warn('后端任务保存失败:', err);
+      });
+    }, 300);
+  }, [prompt, concurrency, enableSound, fileList, hydrated, backendMode, id]);
+
+  useEffect(() => {
+    if (!backendMode) return;
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent).detail as {
+        taskId?: string;
+        state?: PersistedImageTaskState;
+      };
+      if (!detail?.state || detail.taskId !== id) return;
+      const localUploads = normalizeUploadsPayload(serializeUploads(fileList));
+      const serverUploads = normalizeUploadsPayload(
+        Array.isArray(detail.state.uploads) ? detail.state.uploads : [],
+      );
+      const shouldPreserveUploads =
+        fileList.some((file) => !file.localKey) ||
+        JSON.stringify(localUploads) !== JSON.stringify(serverUploads);
+      applyBackendTaskState(detail.state, { preserveUploads: shouldPreserveUploads });
+    };
+    window.addEventListener('backend-task-update', handler as EventListener);
+    return () => {
+      window.removeEventListener('backend-task-update', handler as EventListener);
+    };
+  }, [backendMode, id, fileList]);
+
+  useEffect(() => {
+    if (!backendMode) return;
+    setIsGlobalLoading(results.some((result) => result.status === 'loading'));
+  }, [backendMode, results]);
+
+  useEffect(() => {
+    if (!hydrated || backendMode) return;
     let isActive = true;
     const persistUploads = async () => {
       const pending = fileList.filter(
@@ -224,7 +390,7 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, onRemove,
     return () => {
       isActive = false;
     };
-  }, [fileList, hydrated]);
+  }, [fileList, hydrated, backendMode]);
 
   useEffect(() => {
     const nextKeys = new Map<string, string>();
@@ -233,14 +399,22 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, onRemove,
       nextKeys.set(file.uid, key);
     });
     uploadKeysRef.current.forEach((key, uid) => {
-      if (!nextKeys.has(uid)) {
+      const nextKey = nextKeys.get(uid);
+      if (!nextKey) {
         clearObjectUrl(key);
         cachedUploadKeysRef.current.delete(key);
-        void deleteImageBlob(key);
+        if (!backendMode) {
+          void deleteImageBlob(key);
+        }
+        return;
+      }
+      if (nextKey !== key) {
+        clearObjectUrl(key);
+        cachedUploadKeysRef.current.delete(key);
       }
     });
     uploadKeysRef.current = nextKeys;
-  }, [fileList]);
+  }, [fileList, backendMode]);
 
   const playSuccessSound = () => {
     if (enableSound && audioRef.current) {
@@ -332,6 +506,14 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, onRemove,
     }
   };
 
+  const abortSubTaskRequest = (subTaskId: string) => {
+    const controller = abortControllersRef.current.get(subTaskId);
+    if (controller) {
+      controller.abort();
+      abortControllersRef.current.delete(subTaskId);
+    }
+  };
+
   const persistImageLocally = async (sourceUrl: string, key: string) => {
     try {
       const isHttp = /^https?:\/\//i.test(sourceUrl);
@@ -353,6 +535,9 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, onRemove,
   };
 
   const getPreferredImageSrc = (result: SubTaskResult) => {
+    if (backendMode) {
+      return result.displayUrl || result.sourceUrl;
+    }
     const sourceUrl = result.sourceUrl;
     if (sourceUrl && (/^https?:\/\//i.test(sourceUrl) || sourceUrl.startsWith('data:image'))) {
       return sourceUrl;
@@ -361,9 +546,10 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, onRemove,
   };
 
   const saveImageToProject = async (result: SubTaskResult) => {
-    if (!result.displayUrl || result.savedLocal) return;
+    const imageUrl = getPreferredImageSrc(result);
+    if (!imageUrl || result.savedLocal) return;
     try {
-      const response = await fetch(result.displayUrl);
+      const response = await fetch(imageUrl);
       if (!response.ok) return;
       const blob = await response.blob();
       const saveResponse = await fetch('/api/save-image', {
@@ -437,12 +623,42 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, onRemove,
       message.warning('请输入提示词或上传参考图');
       return;
     }
+    if (backendMode) {
+      if (fileList.some((file) => !file.localKey)) {
+        message.warning('图片正在上传，请稍后再试');
+        return;
+      }
+      setIsGlobalLoading(true);
+      try {
+        await patchBackendTask(id, {
+          prompt,
+          concurrency,
+          enableSound,
+          uploads: serializeUploads(fileList),
+        });
+        const nextState = await generateBackendTask(id);
+        applyBackendTaskState(nextState);
+      } catch (err) {
+        console.error(err);
+        message.error('后端生成失败，请检查服务状态');
+      } finally {
+        setIsGlobalLoading(false);
+      }
+      return;
+    }
+
+    results.forEach((task) => {
+      abortSubTaskRequest(task.id);
+      clearRetryTimer(task.id);
+      clearObjectUrl(task.id);
+      isRetryingRef.current.delete(task.id);
+      taskStartTimesRef.current.delete(task.id);
+    });
 
     setIsGlobalLoading(true);
 
     const startTime = Date.now();
     const tasksToReuse = results.slice(0, concurrency);
-    const tasksToReuseIds = new Set(tasksToReuse.map(task => task.id));
     const numNewTasks = Math.max(0, concurrency - tasksToReuse.length);
     
     const newSubTasks: SubTaskResult[] = Array.from({ length: numNewTasks }).map(() => ({
@@ -452,15 +668,6 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, onRemove,
       startTime,
       savedLocal: false
     }));
-
-    results.forEach(task => {
-      clearObjectUrl(task.id);
-      clearRetryTimer(task.id);
-      if (!tasksToReuseIds.has(task.id)) {
-        isRetryingRef.current.delete(task.id);
-        taskStartTimesRef.current.delete(task.id);
-      }
-    });
 
     const resetTasks = tasksToReuse.map(task => resetTaskForGenerate(task, startTime));
     setResults(() => {
@@ -479,6 +686,21 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, onRemove,
   };
 
   const handleRetrySingle = (subTaskId: string) => {
+    if (backendMode) {
+      setIsGlobalLoading(true);
+      void retryBackendSubTask(id, subTaskId)
+        .then((nextState) => {
+          applyBackendTaskState(nextState);
+        })
+        .catch((err) => {
+          console.error(err);
+          message.error('后端重试失败');
+        })
+        .finally(() => {
+          setIsGlobalLoading(false);
+        });
+      return;
+    }
     clearRetryTimer(subTaskId);
     updateResult(subTaskId, { status: 'loading', error: undefined, displayUrl: undefined, localKey: undefined, sourceUrl: undefined, savedLocal: false, startTime: Date.now() });
     taskStartTimesRef.current.set(subTaskId, Date.now());
@@ -487,6 +709,17 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, onRemove,
   };
 
   const handleResumeSingle = (subTaskId: string) => {
+    if (backendMode) {
+      void retryBackendSubTask(id, subTaskId)
+        .then((nextState) => {
+          applyBackendTaskState(nextState);
+        })
+        .catch((err) => {
+          console.error(err);
+          message.error('后端继续失败');
+        });
+      return;
+    }
     isRetryingRef.current.set(subTaskId, true);
     const hasActiveRequest = abortControllersRef.current.has(subTaskId);
     const hasPendingRetry = retryTimersRef.current.has(subTaskId);
@@ -503,15 +736,27 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, onRemove,
   };
 
   const handleStopSingle = (subTaskId: string) => {
+    if (backendMode) {
+      void stopBackendSubTask(id, subTaskId, 'pause')
+        .then((nextState) => {
+          applyBackendTaskState(nextState);
+        })
+        .catch((err) => {
+          console.error(err);
+          message.error('后端停止失败');
+        });
+      return;
+    }
     isRetryingRef.current.set(subTaskId, false);
     // 不 abort 请求，让它自然完成或失败，但停止重试
     // 如果需要强制停止请求，可以调用 abortControllersRef.current.get(subTaskId)?.abort();
     // 根据需求：停止新的请求，如果有图返回还是要显示的。所以不 abort。
-    // 更新状态显示为“停止重试”
-    updateResult(subTaskId, { status: 'error', error: '已停止重试' });
+    // 更新状态显示为“暂停重试”
+    updateResult(subTaskId, { status: 'error', error: '已暂停重试' });
   };
 
   const performRequest = async (subTaskId: string) => {
+    if (backendMode) return;
     if (abortControllersRef.current.has(subTaskId)) {
       return;
     }
@@ -634,12 +879,12 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, onRemove,
         clearRetryTimer(subTaskId);
         const timerId = window.setTimeout(() => {
           clearRetryTimer(subTaskId);
-          if (isRetryingRef.current.get(subTaskId)) { 
-            performRequest(subTaskId);
-          } else {
-            updateResult(subTaskId, { status: 'error', error: '已停止重试' });
-          }
-        }, 1000);
+        if (isRetryingRef.current.get(subTaskId)) { 
+          performRequest(subTaskId);
+        } else {
+          updateResult(subTaskId, { status: 'error', error: '已暂停重试' });
+        }
+      }, 1000);
         retryTimersRef.current.set(subTaskId, timerId);
       } else {
         updateResult(subTaskId, { status: 'error', error: errorMessage });
@@ -653,10 +898,33 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, onRemove,
   };
 
   const handleStopAll = () => {
-    isRetryingRef.current.forEach((_: boolean, key: string) => {
-      isRetryingRef.current.set(key, false);
+    if (backendMode) {
+      setIsGlobalLoading(true);
+      void stopBackendSubTask(id, undefined, 'abort')
+        .then((nextState) => {
+          applyBackendTaskState(nextState);
+        })
+        .catch((err) => {
+          console.error(err);
+          message.error('后端停止失败');
+        })
+        .finally(() => {
+          setIsGlobalLoading(false);
+        });
+      return;
+    }
+    results.forEach((result) => {
+      isRetryingRef.current.set(result.id, false);
+      clearRetryTimer(result.id);
+      abortSubTaskRequest(result.id);
     });
-    message.info('已停止所有自动重试');
+    setResults((prev) =>
+      prev.map((item) => {
+        if (item.status !== 'loading') return item;
+        return { ...item, status: 'error', error: '已停止', endTime: Date.now() };
+      }),
+    );
+    message.info('已停止所有请求');
     setIsGlobalLoading(false);
   };
 
@@ -666,12 +934,13 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, onRemove,
       if (file.originFileObj && !next.originFileObj) {
         next.originFileObj = file.originFileObj;
       }
-      if (!next.localKey) {
+      if (!next.localKey && !backendMode) {
         next.localKey = buildUploadKey(next.uid);
       }
       if (!next.thumbUrl && next.originFileObj) {
         const objectUrl = URL.createObjectURL(next.originFileObj);
-        registerObjectUrl(next.localKey, objectUrl);
+        const previewKey = next.localKey || buildUploadKey(next.uid);
+        registerObjectUrl(previewKey, objectUrl);
         next.thumbUrl = objectUrl;
       }
       if (next.originFileObj) {
@@ -685,6 +954,37 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, onRemove,
       return next;
     });
     setFileList(normalized);
+
+    if (!backendMode) return;
+    const pending = normalized.filter(
+      (file) => file.originFileObj && !file.localKey,
+    );
+    if (pending.length === 0) return;
+
+    void (async () => {
+      for (const file of pending) {
+        try {
+          const { key } = await uploadBackendImage(file.originFileObj as File, {
+            name: file.name,
+            lastModified: file.lastModified ?? file.originFileObj?.lastModified,
+          });
+          setFileList((prev) =>
+            prev.map((item) =>
+              item.uid === file.uid
+                ? {
+                    ...item,
+                    localKey: key,
+                    thumbUrl: buildBackendImageUrl(key),
+                  }
+                : item,
+            ),
+          );
+        } catch (err) {
+          console.error(err);
+          message.error(`上传失败: ${file.name}`);
+        }
+      }
+    })();
   };
 
   const successRate = calculateSuccessRate(
@@ -1037,7 +1337,7 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, onRemove,
                             cursor: 'pointer'
                           }}>
                             <a
-                              href={result.displayUrl}
+                              href={imageSrc}
                               download={`image-${result.id}.png`}
                               onClick={() => {
                                 void saveImageToProject(result);
@@ -1062,7 +1362,7 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, onRemove,
                           <Space direction="vertical" align="center" size={8}>
                             <CloseCircleFilled style={{ fontSize: 20, color: '#FF5252' }} />
                             <Space>
-                              {result.error === '已停止重试' ? (
+                              {result.error === '已暂停重试' ? (
                                 <Button 
                                   size="small" 
                                   icon={<PlayCircleFilled />} 
@@ -1084,7 +1384,7 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, onRemove,
                     )}
                     
                     {/* 错误信息浮层 */}
-                    {result.status === 'loading' && result.error && (
+                    {result.error && result.status !== 'success' && (
                       <div style={{
                         position: 'absolute',
                         top: 0, left: 0, right: 0,
