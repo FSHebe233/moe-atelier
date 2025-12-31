@@ -53,7 +53,7 @@ interface ImageTaskProps {
   dragAttributes?: any;
   dragListeners?: any;
 }
-const SUCCESS_AUDIO_SRC = 'https://actions.google.com/sounds/v1/cartoon/magic_chime.ogg'; 
+const SUCCESS_AUDIO_SRC = 'https://actions.google.com/sounds/v1/cartoon/magic_chime.ogg';
 const DEFAULT_CONCURRENCY = 2;
 
 type UploadFileWithMeta = UploadFile & {
@@ -108,6 +108,9 @@ const normalizeConcurrency = (value: unknown, fallback = DEFAULT_CONCURRENCY) =>
 
 const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, backendMode, onRemove, onStatsUpdate, dragAttributes, dragListeners }: ImageTaskProps) => {
   const [prompt, setPrompt] = useState('');
+  const promptRef = useRef(prompt);
+  const promptDirtyRef = useRef(false);
+  const promptFocusedRef = useRef(false);
   const [fileList, setFileList] = useState<UploadFileWithMeta[]>([]);
   const [concurrency, setConcurrency] = useState<number>(DEFAULT_CONCURRENCY);
   const [concurrencyInput, setConcurrencyInput] = useState<string>(String(DEFAULT_CONCURRENCY));
@@ -123,6 +126,7 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, backendMo
   const taskStartTimesRef = useRef<Map<string, number>>(new Map());
   const retryTimersRef = useRef<Map<string, number>>(new Map());
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const prevResultsRef = useRef<SubTaskResult[]>([]);
   const dbPromiseRef = useRef<Promise<IDBDatabase> | null>(null);
   const objectUrlMapRef = useRef<Map<string, string>>(new Map());
   const uploadKeysRef = useRef<Map<string, string>>(new Map());
@@ -153,9 +157,14 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, backendMo
 
   const applyBackendTaskState = (
     stored: PersistedImageTaskState,
-    options: { preserveUploads?: boolean } = {},
+    options: { preserveUploads?: boolean; preservePrompt?: boolean } = {},
   ) => {
     const nextPrompt = stored.prompt ?? '';
+    const currentPrompt = promptRef.current;
+    const shouldPreservePrompt =
+      options.preservePrompt ||
+      promptFocusedRef.current ||
+      (promptDirtyRef.current && nextPrompt !== currentPrompt);
     const nextConcurrency = normalizeConcurrency(stored.concurrency, DEFAULT_CONCURRENCY);
     const nextEnableSound = typeof stored.enableSound === 'boolean' ? stored.enableSound : true;
     const storedUploads = Array.isArray(stored.uploads) ? stored.uploads : [];
@@ -166,7 +175,13 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, backendMo
       uploads: normalizeUploadsPayload(storedUploads),
     });
 
-    setPrompt(nextPrompt);
+    if (!shouldPreservePrompt) {
+      promptRef.current = nextPrompt;
+      promptDirtyRef.current = false;
+      setPrompt(nextPrompt);
+    } else if (nextPrompt === currentPrompt) {
+      promptDirtyRef.current = false;
+    }
     setConcurrency(nextConcurrency);
     setConcurrencyInput(String(nextConcurrency));
     setEnableSound(nextEnableSound);
@@ -293,6 +308,10 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, backendMo
   }, [storageKey, backendMode, id]);
 
   useEffect(() => {
+    promptRef.current = prompt;
+  }, [prompt]);
+
+  useEffect(() => {
     audioRef.current = new Audio(SUCCESS_AUDIO_SRC);
     return () => {
       abortControllersRef.current.forEach((controller: AbortController) => controller.abort());
@@ -375,6 +394,20 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, backendMo
   }, [backendMode, results]);
 
   useEffect(() => {
+    const previous = prevResultsRef.current;
+    prevResultsRef.current = results;
+    if (!backendMode || !enableSound) return;
+    if (previous.length === 0) return;
+    const previousStatus = new Map(previous.map((item) => [item.id, item.status]));
+    const hasNewSuccess = results.some(
+      (item) => item.status === 'success' && previousStatus.get(item.id) !== 'success',
+    );
+    if (hasNewSuccess) {
+      playSuccessSound();
+    }
+  }, [results, backendMode, enableSound]);
+
+  useEffect(() => {
     if (!hydrated || backendMode) return;
     let isActive = true;
     const persistUploads = async () => {
@@ -430,6 +463,20 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, backendMo
       audioRef.current.currentTime = 0;
       audioRef.current.play().catch((e: any) => console.error('Error playing sound:', e));
     }
+  };
+
+  const handlePromptChange = (value: string) => {
+    promptDirtyRef.current = true;
+    promptRef.current = value;
+    setPrompt(value);
+  };
+
+  const handlePromptFocus = () => {
+    promptFocusedRef.current = true;
+  };
+
+  const handlePromptBlur = () => {
+    promptFocusedRef.current = false;
   };
 
   const handleConcurrencyInputChange = (value: string) => {
@@ -1151,7 +1198,9 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, backendMo
           <TextArea 
             placeholder="在此描述您的想象..." 
             value={prompt} 
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setPrompt(e.target.value)} 
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handlePromptChange(e.target.value)}
+            onFocus={handlePromptFocus}
+            onBlur={handlePromptBlur}
             autoSize={{ minRows: 3, maxRows: 12 }}
             variant="borderless"
             style={{ padding: '12px', fontSize: 14, resize: 'vertical', background: 'transparent', color: '#665555' }}
