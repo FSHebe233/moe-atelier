@@ -1,16 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
-  Input, Button, Upload, message, Spin, Image, 
-  Space, Typography, Tooltip, Progress
+  Input, Button, Upload, message, Spin, Image,
+  Space, Typography, Tooltip, Progress, Modal
 } from 'antd';
-import { 
-  UploadOutlined, DeleteFilled, ReloadOutlined, 
+import {
+  UploadOutlined, DeleteFilled, ReloadOutlined,
   BellFilled, BellOutlined, DownloadOutlined, PictureFilled,
   CloseCircleFilled, PauseCircleFilled, FireFilled,
   StarFilled,
   LoadingOutlined,
   PlayCircleFilled,
-  HolderOutlined
+  HolderOutlined,
+  SnippetsOutlined
 } from '@ant-design/icons';
 import type { RcFile, UploadFile } from 'antd/es/upload/interface';
 import axios from 'axios';
@@ -128,6 +129,8 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, backendMo
   const promptDirtyRef = useRef(false);
   const promptFocusedRef = useRef(false);
   const [fileList, setFileList] = useState<UploadFileWithMeta[]>([]);
+  const [tempFileList, setTempFileList] = useState<UploadFile[]>([]);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [concurrency, setConcurrency] = useState<number>(DEFAULT_CONCURRENCY);
   const [concurrencyInput, setConcurrencyInput] = useState<string>(String(DEFAULT_CONCURRENCY));
   const [enableSound, setEnableSound] = useState<boolean>(true);
@@ -1698,6 +1701,73 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, backendMo
   const fastestTimeStr = formatDuration(stats.fastestTime);
   const slowestTimeStr = formatDuration(stats.slowestTime);
 
+  const handlePasteFromClipboard = async () => {
+    try {
+      const items = await navigator.clipboard.read();
+      const imageItems = items.filter((item) =>
+        item.types.some((type) => type.startsWith('image/')),
+      );
+
+      if (imageItems.length === 0) {
+        message.info('剪贴板中没有图片');
+        return;
+      }
+
+      const newFiles: UploadFile[] = [];
+
+      for (const item of imageItems) {
+        const type = item.types.find((t) => t.startsWith('image/'));
+        if (type) {
+          const blob = await item.getType(type);
+          const file = new File([blob], `clipboard-${Date.now()}.png`, { type });
+          const rcFile = file as RcFile;
+          const objectUrl = URL.createObjectURL(file);
+          const uploadFile: UploadFile = {
+            uid: `clipboard-${Date.now()}-${Math.random()}`,
+            name: file.name,
+            status: 'done',
+            originFileObj: rcFile,
+            type: file.type,
+            size: file.size,
+            thumbUrl: objectUrl,
+          };
+          newFiles.push(uploadFile);
+        }
+      }
+
+      if (newFiles.length > 0) {
+        setTempFileList((prev) => [...prev, ...newFiles]);
+        message.success(`已从剪贴板读取 ${newFiles.length} 张图片`);
+      }
+    } catch (err) {
+      console.error('Failed to read clipboard:', err);
+      message.error('无法读取剪贴板，请确保已授予权限');
+    }
+  };
+
+  const handleTempUploadChange = ({ fileList: newFileList }: { fileList: UploadFile[] }) => {
+    const processedList = newFileList.map((file) => {
+      if (!file.thumbUrl && file.originFileObj) {
+        file.thumbUrl = URL.createObjectURL(file.originFileObj);
+      }
+      return file;
+    });
+    setTempFileList(processedList);
+  };
+
+  const handleModalSubmit = () => {
+    if (tempFileList.length > 0) {
+      handleUploadChange({ fileList: [...fileList, ...tempFileList] });
+    }
+    setTempFileList([]);
+    setIsUploadModalOpen(false);
+  };
+
+  const handleModalCancel = () => {
+    setTempFileList([]);
+    setIsUploadModalOpen(false);
+  };
+
   return (
     <div className="moe-card" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
@@ -1858,25 +1928,147 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, backendMo
             gap: 8
           }}>
             <Space size={8}>
-              <Upload
-                fileList={fileList}
-                onChange={handleUploadChange}
-                beforeUpload={() => false}
-                multiple
-                showUploadList={false}
+              <Tooltip title="上传参考图">
+                <Button
+                  size="small"
+                  icon={<UploadOutlined />}
+                  onClick={() => setIsUploadModalOpen(true)}
+                  style={
+                    fileList.length > 0
+                      ? {
+                          background: '#FF9EB5',
+                          color: '#fff',
+                          border: 'none',
+                        }
+                      : {
+                          background: '#fff',
+                          color: '#998888',
+                          border: 'none',
+                        }
+                  }
+                />
+              </Tooltip>
+              <Modal
+                title="上传参考图"
+                open={isUploadModalOpen}
+                onCancel={handleModalCancel}
+                footer={[
+                  <Button key="cancel" onClick={handleModalCancel}>
+                    取消
+                  </Button>,
+                  <Button key="submit" type="primary" onClick={handleModalSubmit}>
+                    确认添加
+                  </Button>,
+                ]}
+                width={500}
               >
-                <Tooltip title="上传参考图">
-                  <Button 
-                    size="small" 
-                    icon={<UploadOutlined />} 
-                    style={fileList.length > 0 ? { 
-                      background: '#FF9EB5', color: '#fff', border: 'none' 
-                    } : { 
-                      background: '#fff', color: '#998888', border: 'none' 
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 16,
+                    padding: '16px 0',
+                  }}
+                >
+                  <div
+                    style={{
+                      minHeight: 120,
+                      border: '1px dashed #d9d9d9',
+                      borderRadius: 8,
+                      padding: 12,
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: 8,
+                      alignContent: 'flex-start',
+                      background: '#fafafa',
                     }}
-                  />
-                </Tooltip>
-              </Upload>
+                  >
+                    {tempFileList.length === 0 && (
+                      <div
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#999',
+                          minHeight: 96,
+                        }}
+                      >
+                        暂无图片，请粘贴或选择文件
+                      </div>
+                    )}
+                    {tempFileList.map((file, index) => (
+                      <div
+                        key={file.uid}
+                        style={{ position: 'relative', width: 80, height: 80 }}
+                      >
+                        <Image
+                          src={file.thumbUrl || ''}
+                          alt={file.name}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            borderRadius: 4,
+                          }}
+                          preview={false}
+                        />
+                        <div
+                          style={{
+                            position: 'absolute',
+                            top: -6,
+                            right: -6,
+                            cursor: 'pointer',
+                            background: '#fff',
+                            borderRadius: '50%',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                            display: 'flex',
+                            zIndex: 1,
+                          }}
+                          onClick={() => {
+                            const newList = [...tempFileList];
+                            newList.splice(index, 1);
+                            setTempFileList(newList);
+                          }}
+                        >
+                          <CloseCircleFilled
+                            style={{ color: '#ff4d4f', fontSize: 16 }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Buttons Area */}
+                  <div style={{ display: 'flex', gap: 16 }}>
+                    <Button
+                      style={{ flex: 1, height: 40 }}
+                      icon={<SnippetsOutlined />}
+                      onClick={handlePasteFromClipboard}
+                    >
+                      从剪贴板粘贴
+                    </Button>
+
+                    <div style={{ flex: 1 }}>
+                      <Upload
+                        fileList={tempFileList}
+                        onChange={handleTempUploadChange}
+                        beforeUpload={() => false}
+                        multiple
+                        showUploadList={false}
+                      >
+                        <Button
+                          style={{ width: '100%', height: 40 }}
+                          icon={<UploadOutlined />}
+                        >
+                          选择本地文件
+                        </Button>
+                      </Upload>
+                    </div>
+                  </div>
+                </div>
+              </Modal>
 
               <Space size={4} style={{ background: '#fff', padding: '2px 8px', borderRadius: 12, display: 'flex', alignItems: 'center' }}>
                 <Text type="secondary" style={{ fontSize: 10, whiteSpace: 'nowrap' }}>并发</Text>
