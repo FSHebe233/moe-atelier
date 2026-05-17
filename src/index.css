@@ -52,6 +52,34 @@
   --moe-dot-bg-position: 0 0, 20px 20px;
 }
 
+html.dark {
+  --c-bg: #1e1e1e;
+  --c-bg-card: #252526;
+  --c-bg-input: #3c3c3c;
+  --c-primary: #FF9EB5; 
+  --c-primary-hover: #FF85A1;
+  --c-primary-active: #FF7090;
+  --c-primary-light: #2d2d30;
+  --c-success: #6BCB8A;
+  --c-success-dark: #A7E8BD;
+  --c-warning: #FFC857;
+  --c-warning-dark: #FFE5A0;
+  --c-error: #FF8FA3;
+  --c-error-dark: #FFB3C1;
+  --c-info: #A0E1E8;
+  --c-text-main: #f3f4f6;
+  --c-text-light: #9ca3af;
+  --c-text-white: #ffffff;
+  --shadow-xs: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.5);
+  --shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  --moe-dot-bg-image:
+    radial-gradient(rgba(255, 255, 255, 0.05) 20%, transparent 20%),
+    radial-gradient(rgba(255, 255, 255, 0.05) 20%, transparent 20%);
+}
+
 html {
   background-color: var(--c-bg);
   background-image: var(--moe-dot-bg-image);
@@ -119,7 +147,7 @@ body {
   overflow: hidden;
   min-height: 0;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--c-bg-card);
   border: 1px dashed #FF9EB5;
   padding: 0 12px;
   opacity: 0;
@@ -153,14 +181,14 @@ body {
 .moe-card {
   background: var(--c-bg-card);
   border-radius: var(--radius-md);
-  box-shadow: 0 8px 0 rgba(255, 158, 181, 0.15), 0 0 0 2px #fff, 0 4px 12px rgba(255, 158, 181, 0.1);
+  box-shadow: 0 8px 0 rgba(255, 158, 181, 0.15), 0 0 0 2px var(--c-bg-card), 0 4px 12px rgba(255, 158, 181, 0.1);
   border: 2px solid var(--c-primary-light);
   transition: all 0.3s ease;
   overflow: hidden;
 }
 
 .moe-card:hover {
-  box-shadow: 0 12px 0 rgba(255, 158, 181, 0.2), 0 0 0 2px #fff, 0 8px 24px rgba(255, 158, 181, 0.15);
+  box-shadow: 0 12px 0 rgba(255, 158, 181, 0.2), 0 0 0 2px var(--c-bg-card), 0 8px 24px rgba(255, 158, 181, 0.15);
   transform: translateY(-4px);
 }
 
@@ -171,9 +199,9 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
 
 /* 萌系贴纸特效 */
 .moe-sticker {
-  background: #fff;
+  background: var(--c-bg-card);
   border-radius: 16px;
-  border: 2px solid #FFF0F3;
+  border: 2px solid var(--c-primary-light);
   box-shadow: 0 4px 0 #FFE5A0, 0 8px 12px rgba(255, 158, 181, 0.1);
   transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -184,11 +212,11 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
 
 /* 统计面板样式优化 */
 .stat-panel {
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--c-bg-card);
   backdrop-filter: blur(10px);
   border-radius: var(--radius-lg);
   padding: 24px;
-  box-shadow: 0 8px 0 rgba(255, 158, 181, 0.1), 0 0 0 4px #fff, 0 4px 20px rgba(255, 158, 181, 0.15);
+  box-shadow: 0 8px 0 rgba(255, 158, 181, 0.1), 0 0 0 2px var(--c-bg-card), 0 4px 20px rgba(255, 158, 181, 0.15);
   border: 2px solid var(--c-primary-light);
   position: relative;
 }
@@ -215,8 +243,8 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
   padding: 16px 12px;
   border-radius: var(--radius-md);
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  background: #fff;
-  border: 2px dashed #FFF0F3;
+  background: var(--c-bg-card);
+  border: 2px dashed var(--c-primary-light);
   position: relative;
 }
 
@@ -258,7 +286,7 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
   height: auto !important;
   min-height: 40px !important; /* 稍微缩小一点点 */
   border-radius: var(--radius-lg) !important;
-  background: #ffffff !important;
+  background: var(--c-bg-card)fff !important;
   border: 2px solid #F0F0F0 !important; /* 灰色边框 */
   color: var(--c-text-main) !important;
   font-weight: 700 !important;
@@ -336,7 +364,7 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
   height: auto !important;
   min-height: 40px !important; /* 稍微缩小一点点 */
   border-radius: var(--radius-lg) !important;
-  background: #ffffff !important;
+  background: var(--c-bg-card)fff !important;
   border: 2px solid #F0F0F0 !important;
   color: var(--c-text-light) !important;
   font-weight: 700 !important;
@@ -467,7 +495,7 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
 }
 
 .ant-btn-default {
-  background: #fff !important;
+  background: var(--c-bg-card) !important;
   color: var(--c-text-main) !important;
   border: 2px solid #F0F0F0 !important;
 }
@@ -509,7 +537,7 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
 }
 
 .ant-input:focus, .ant-input-textarea:focus {
-  background-color: #fff !important;
+  background-color: var(--c-bg-card) !important;
   border-color: var(--c-primary) !important;
   box-shadow: 0 0 0 4px var(--c-primary-light) !important;
 }
@@ -524,15 +552,15 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
 
 /* 萌系标签 */
 .moe-tag {
-  background: #FFF0F3;
+  background: var(--c-primary-light);
   color: var(--c-primary);
-  border: 1px solid #FFB7C5;
+  border: 1px solid var(--c-primary);
   border-radius: 12px;
   padding: 4px 10px;
   font-weight: 700;
   display: inline-flex;
   align-items: center;
-  box-shadow: 0 2px 0 #FFB7C5;
+  box-shadow: 0 2px 0 var(--c-primary);
 }
 
 /* Collection drawer handle integration */
@@ -823,7 +851,7 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
 }
 
 .polaroid-paper.error-state {
-  background: #FFF5F7;
+  background: var(--c-bg);
   border: 1px dashed #FFB7C5;
   box-shadow: 
     0 4px 16px rgba(138, 113, 118, 0.25),
@@ -853,7 +881,7 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
 /* 便签样式提示词输入框 */
 .sticky-note-container {
   position: relative;
-  background: #FFFFF2; /* 非常浅的暖白色/便签黄 */
+  background: var(--c-bg); /* 非常浅的暖白色/便签黄 */
   border-radius: 12px;
   border: 1px solid #F0EAD6;
   box-shadow: 0 4px 12px rgba(0,0,0,0.04), 0 8px 24px rgba(255, 158, 181, 0.08); /* 增加底部阴影 */
@@ -878,7 +906,7 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
 
 .sticky-note-fold-effect.top {
   top: 0;
-  background: linear-gradient(to bottom, #FFFFF2 30%, rgba(255,255,255,0) 100%);
+  background: linear-gradient(to bottom, var(--c-bg) 30%, rgba(255,255,255,0) 100%);
   /* 模拟向上卷入的阴影 */
   box-shadow: inset 0 12px 12px -12px rgba(0, 0, 0, 0.25);
   border-top-left-radius: 12px;
@@ -887,7 +915,7 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
 
 .sticky-note-fold-effect.bottom {
   bottom: 0;
-  background: linear-gradient(to top, #FFFFF2 30%, rgba(255,255,255,0) 100%);
+  background: linear-gradient(to top, var(--c-bg) 30%, rgba(255,255,255,0) 100%);
   /* 模拟向下卷出的阴影 */
   box-shadow: inset 0 -12px 12px -12px rgba(0, 0, 0, 0.25);
   border-bottom-left-radius: 12px;
@@ -983,3 +1011,10 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
 .api-select-dot-running {
   animation: api-dot-blink 1s infinite !important;
 }
+
+html.dark .ant-modal-content { background: var(--c-bg-card); color: var(--c-text-main); }
+
+/* Theme Fixes */
+.ant-select-selector { background-color: var(--c-bg-input) !important; color: var(--c-text-main) !important; border-color: var(--c-primary-light) !important; }
+.ant-select-selection-item { color: var(--c-text-main) !important; }
+.ant-modal-content { background-color: var(--c-bg-card) !important; color: var(--c-text-main) !important; }

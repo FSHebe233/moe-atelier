@@ -2179,7 +2179,7 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, backendMo
         <div style={{
           position: 'absolute',
           top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(255, 255, 255, 0.9)',
+          background: 'var(--c-bg-card)',
           backdropFilter: 'blur(4px)',
           zIndex: 100,
           display: 'flex',
@@ -2191,7 +2191,7 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, backendMo
           animation: 'fadeIn 0.2s ease-out',
         }}>
           <div style={{
-            background: '#FFF0F3',
+            background: 'var(--c-primary-light)',
             width: 80,
             height: 80,
             borderRadius: '50%',
@@ -2203,7 +2203,7 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, backendMo
           }}>
             <CloudUploadOutlined style={{ fontSize: 40, color: '#FF9EB5' }} />
           </div>
-          <Text strong style={{ fontSize: 16, color: '#665555' }}>释放以添加参考图</Text>
+          <Text strong style={{ fontSize: 16, color: 'var(--c-text-main)' }}>释放以添加参考图</Text>
           <Text type="secondary" style={{ fontSize: 12, marginTop: 4 }}>支持 JPG, PNG, WebP, GIF</Text>
         </div>
       )}
@@ -2211,11 +2211,11 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, backendMo
       {/* Header */}
       <div style={{ 
         padding: '12px 16px', 
-        borderBottom: '2px dashed #FFF0F3',
+        borderBottom: '2px dashed var(--c-primary-light)',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        background: '#fff',
+        background: 'var(--c-bg-card)',
         position: 'relative',
         overflow: 'hidden'
       }}>
@@ -2239,18 +2239,18 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, backendMo
           </div>
           <div style={{ 
             width: 28, height: 28, 
-            background: '#FFF0F3', 
+            background: 'var(--c-primary-light)', 
             borderRadius: 8, 
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: '#FF9EB5'
           }}>
             <PictureFilled style={{ fontSize: 14 }} />
           </div>
-          <Text strong style={{ fontSize: 14, color: '#665555' }}>任务 #{id.slice(0, 6).toUpperCase()}</Text>
+          <Text strong style={{ fontSize: 14, color: 'var(--c-text-main)' }}>任务 #{id.slice(0, 6).toUpperCase()}</Text>
           <div 
             className={isGlobalLoading ? 'api-select-running' : ''}
             style={{
-              background: isGlobalLoading ? '#F6FFED' : '#FFF8FA',
+              background: isGlobalLoading ? '#F6FFED' : 'var(--c-bg-input)',
               borderRadius: 12,
               padding: '0',
               border: `1px solid ${isGlobalLoading ? '#B7EB8F' : '#FFE5EA'}`,
@@ -2297,8 +2297,8 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, backendMo
       {/* Stats Bar - 紧凑设计 */}
       <div style={{ 
         padding: '12px 16px', 
-        background: '#FAFAFA',
-        borderBottom: '2px dashed #FFF0F3',
+        background: 'var(--c-bg)',
+        borderBottom: '2px dashed var(--c-primary-light)',
         fontSize: 12
       }}>
         <div style={{ 
@@ -2309,7 +2309,7 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, backendMo
         }}>
           <div>
             <div style={{ color: '#998888', fontSize: 10, marginBottom: 2 }}>请求</div>
-            <div style={{ fontWeight: 700, color: '#665555' }}>{stats.totalRequests}</div>
+            <div style={{ fontWeight: 700, color: 'var(--c-text-main)' }}>{stats.totalRequests}</div>
           </div>
           <div>
             <div style={{ color: '#998888', fontSize: 10, marginBottom: 2 }}>成功</div>
@@ -2335,7 +2335,7 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, backendMo
       </div>
 
       {/* Input Area */}
-      <div style={{ padding: '16px', background: 'linear-gradient(180deg, #FAFAFA 0%, #fff 100%)' }}>
+      <div style={{ padding: '16px', background: 'linear-gradient(180deg, var(--c-bg) 0%, var(--c-bg-card) 100%)' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {/* 独立便签输入框 */}
           <div className="sticky-note-container">
@@ -2382,7 +2382,7 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, backendMo
                   <div 
                     style={{ 
                       position: 'absolute', top: -6, right: -6, 
-                      background: '#fff', borderRadius: '50%', cursor: 'pointer',
+                      background: 'var(--c-bg-card)', borderRadius: '50%', cursor: 'pointer',
                       boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                       zIndex: 1
                     }}
@@ -2422,17 +2422,17 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, backendMo
                     size="small" 
                     icon={<UploadOutlined />} 
                     style={fileList.length > 0 ? { 
-                      background: '#FF9EB5', color: '#fff', border: 'none' 
+                      background: '#FF9EB5', color: 'var(--c-bg-card)', border: 'none' 
                     } : { 
-                      background: '#fff', color: '#998888', border: '1px solid #E8E8E8' 
+                      background: 'var(--c-bg-card)', color: '#998888', border: '1px solid var(--c-primary-light)' 
                     }}
                   />
                 </Tooltip>
               </Upload>
 
-              <Space size={4} style={{ background: '#fff', padding: '2px 8px', borderRadius: 16, display: 'flex', alignItems: 'center', border: '1px solid #E8E8E8', height: '24px' }}>
+              <Space size={4} style={{ background: 'var(--c-bg-card)', padding: '2px 8px', borderRadius: 16, display: 'flex', alignItems: 'center', border: '1px solid var(--c-primary-light)', height: '24px' }}>
                 <Text style={{ fontSize: 10, whiteSpace: 'nowrap', color: '#998888' }}>并发</Text>
-                <div style={{ width: 1, height: 10, background: '#E8E8E8', margin: '0 2px' }} />
+                <div style={{ width: 1, height: 10, background: 'var(--c-primary-light)', margin: '0 2px' }} />
                 <input 
                   type="number"
                   min={1} 
@@ -2460,8 +2460,8 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, backendMo
                   icon={enableSound ? <BellFilled /> : <BellOutlined />} 
                   style={{ 
                     color: enableSound ? '#FF9EB5' : '#998888',
-                    background: '#fff',
-                    border: enableSound ? '1px solid #FF9EB5' : '1px solid #E8E8E8'
+                    background: 'var(--c-bg-card)',
+                    border: enableSound ? '1px solid #FF9EB5' : '1px solid var(--c-primary-light)'
                   }}
                   onClick={() => setEnableSound(!enableSound)}
                 />
@@ -2499,7 +2499,7 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, backendMo
                     </Text>
                   </Space>
                 }
-                title={<Text strong style={{ fontSize: 13, color: '#665555' }}>任务设置</Text>}
+                title={<Text strong style={{ fontSize: 13, color: 'var(--c-text-main)' }}>任务设置</Text>}
                 trigger="click"
                 placement="bottom"
               >
@@ -2509,8 +2509,8 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, backendMo
                     icon={<SettingFilled />} 
                     style={{ 
                       color: '#998888',
-                      background: '#fff',
-                      border: '1px solid #E8E8E8'
+                      background: 'var(--c-bg-card)',
+                      border: '1px solid var(--c-primary-light)'
                     }}
                   />
                 </Tooltip>
@@ -2593,7 +2593,7 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, backendMo
                               danger
                               icon={<PauseCircleFilled />}
                               onClick={() => handleStopSingle(result.id)}
-                              style={{ background: 'rgba(255,255,255,0.8)', borderRadius: '50%', width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(255,82,82,0.2)' }}
+                              style={{ background: 'var(--c-bg-card)', borderRadius: '50%', width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(255,82,82,0.2)' }}
                             />
                           </div>
                         </div>
@@ -2628,7 +2628,7 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, storageKey, config, backendMo
                                       position: 'absolute',
                                       bottom: 4,
                                       right: 4,
-                                      color: 'rgba(255,255,255,0.9)',
+                                      color: 'var(--c-bg-card)',
                                       fontSize: '11px',
                                       fontFamily: 'monospace',
                                       textShadow: '1px 1px 0 rgba(0,0,0,0.8), -1px -1px 0 rgba(0,0,0,0.8), 1px -1px 0 rgba(0,0,0,0.8), -1px 1px 0 rgba(0,0,0,0.8), 0px 2px 4px rgba(0,0,0,0.5)',

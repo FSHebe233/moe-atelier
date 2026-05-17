@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useState, useCallback, useRef } from 'react';
-import { Layout, Button, Form, Row, Col, Typography, Space, ConfigProvider, message, Tooltip } from 'antd';
+import { Layout, Button, Form, Row, Col, Typography, Space, ConfigProvider, message, Tooltip, theme } from 'antd';
 import { 
   PlusOutlined, 
   SettingFilled, 
@@ -12,7 +12,10 @@ import {
   RocketFilled,
   HourglassFilled,
   DashboardFilled,
-  TrophyFilled
+  TrophyFilled,
+  DesktopOutlined,
+  MoonOutlined,
+  BulbOutlined
 } from '@ant-design/icons';
 import { v4 as uuidv4 } from 'uuid';
 import PromptDrawer from './components/PromptDrawer';
@@ -110,6 +113,40 @@ const buildBackendFormatConfigs = (
 };
 
 function App() {
+  const [themeMode, setThemeMode] = useState<'light' | 'dark' | 'system'>(() => 
+    (localStorage.getItem('themeMode') as 'light' | 'dark' | 'system') || 'system'
+  );
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  React.useEffect(() => {
+    localStorage.setItem('themeMode', themeMode);
+    const updateDark = (matches: boolean) => {
+      setIsDarkMode(matches);
+      if (matches) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    };
+    
+    if (themeMode === 'system') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      updateDark(mediaQuery.matches);
+      const listener = (e: MediaQueryListEvent) => updateDark(e.matches);
+      mediaQuery.addEventListener('change', listener);
+      return () => mediaQuery.removeEventListener('change', listener);
+    } else {
+      updateDark(themeMode === 'dark');
+    }
+  }, [themeMode]);
+
+  const toggleTheme = () => {
+    const nextMode = themeMode === 'system' ? 'light' : themeMode === 'light' ? 'dark' : 'system';
+    setThemeMode(nextMode);
+  };
+  const ThemeIcon = themeMode === 'system' ? DesktopOutlined : themeMode === 'dark' ? MoonOutlined : BulbOutlined;
+  const themeTooltip = themeMode === 'system' ? '系统主题' : themeMode === 'dark' ? '深色主题' : '浅色主题';
+
   const initialBackendMode = getBackendMode() && Boolean(getBackendToken());
   const [config, setConfig] = useState<AppConfig>(() => loadConfig());
   const [tasks, setTasks] = useState<TaskConfig[]>(() =>
@@ -1045,10 +1082,12 @@ function App() {
   return (
     <ConfigProvider
       theme={{
+        algorithm: isDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
         token: {
           colorPrimary: '#FF9EB5',
-          colorTextBase: '#665555',
-          colorBgBase: '#FFF9FA',
+          colorTextBase: isDarkMode ? '#e5e7eb' : '#665555',
+          colorBgBase: isDarkMode ? '#1e1e1e' : '#FFF9FA',
+          colorBgContainer: isDarkMode ? '#252526' : '#FFFFFF',
           borderRadius: 20,
           fontFamily: "'Nunito', 'Quicksand', sans-serif",
         },
@@ -1059,12 +1098,18 @@ function App() {
             fontWeight: 700,
           },
           Input: {
-            colorBgContainer: '#FFF0F3',
+            colorBgContainer: isDarkMode ? '#3c3c3c' : '#FFF0F3',
             activeBorderColor: '#FF9EB5',
             hoverBorderColor: '#FFB7C5',
           },
+          Select: {
+            colorBgContainer: isDarkMode ? '#3c3c3c' : '#FFFFFF',
+          },
           Drawer: {
-            colorBgElevated: '#FFFFFF',
+            colorBgElevated: isDarkMode ? '#252526' : '#FFFFFF',
+          },
+          Modal: {
+            colorBgElevated: isDarkMode ? '#252526' : '#FFFFFF',
           }
         }
       }}
@@ -1080,10 +1125,10 @@ function App() {
           position: 'sticky',
           top: 0,
           zIndex: 100,
-          background: 'rgba(255, 255, 255, 0.9)',
+          background: isDarkMode ? 'rgba(31, 41, 55, 0.9)' : 'var(--c-bg-card)',
           backdropFilter: 'blur(12px)',
-          borderBottom: '2px dashed #FFF0F3',
-          boxShadow: '0 4px 20px rgba(255, 158, 181, 0.1)'
+          borderBottom: isDarkMode ? '2px dashed #4b5563' : '2px dashed var(--c-primary-light)',
+          boxShadow: isDarkMode ? '0 4px 20px rgba(0, 0, 0, 0.2)' : '0 4px 20px rgba(255, 158, 181, 0.1)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
             <div className="hover-scale" style={{ 
@@ -1098,10 +1143,10 @@ function App() {
               transform: 'rotate(-8deg)',
               border: '2px solid #fff'
             }}>
-              <HeartFilled style={{ fontSize: 24, color: '#fff' }} />
+              <HeartFilled style={{ fontSize: 24, color: 'var(--c-bg-card)' }} />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-              <Title level={3} style={{ margin: 0, color: '#665555', fontWeight: 800, letterSpacing: '-0.5px', lineHeight: 1, whiteSpace: 'nowrap' }}>
+              <Title level={3} style={{ margin: 0, color: 'var(--c-text-main)', fontWeight: 800, letterSpacing: '-0.5px', lineHeight: 1, whiteSpace: 'nowrap' }}>
                 萌图 <span style={{ color: '#FF9EB5' }}>工坊</span>
               </Title>
               <Text style={{ margin: 0, color: '#FF9EB5', fontWeight: 700, fontSize: 12, letterSpacing: '0.5px', lineHeight: 1, marginTop: 4 }}>
@@ -1111,6 +1156,31 @@ function App() {
           </div>
 
           <Space size={8} className="header-actions">
+            <Tooltip title={themeTooltip}>
+              <Button
+                icon={<ThemeIcon />}
+                onClick={toggleTheme}
+                size="large"
+                className="mobile-hidden"
+                style={{ 
+                  background: isDarkMode ? 'rgba(55,65,81,0.6)' : 'var(--c-bg-card)', 
+                  border: '1px solid #FF9EB5',
+                  color: '#FF9EB5' 
+                }}
+              />
+            </Tooltip>
+            <Button
+              icon={<ThemeIcon />}
+              onClick={toggleTheme}
+              size="large"
+              shape="circle"
+              className="desktop-hidden circle-icon-btn"
+              style={{ 
+                background: isDarkMode ? 'rgba(55,65,81,0.6)' : 'var(--c-bg-card)', 
+                border: '1px solid #FF9EB5',
+                color: '#FF9EB5' 
+              }}
+            />
             <Tooltip title="提示词广场">
               <Button
                 icon={<AppstoreFilled />}
@@ -1118,7 +1188,7 @@ function App() {
                 size="large"
                 className="mobile-hidden"
                 style={{ 
-                  background: 'rgba(255,255,255,0.6)', 
+                  background: isDarkMode ? 'rgba(55,65,81,0.6)' : 'var(--c-bg-card)', 
                   border: '1px solid #FF9EB5',
                   color: '#FF9EB5' 
                 }}
@@ -1133,7 +1203,7 @@ function App() {
                 shape="circle"
                 className="desktop-hidden circle-icon-btn"
                 style={{ 
-                  background: 'rgba(255,255,255,0.6)', 
+                  background: isDarkMode ? 'rgba(55,65,81,0.6)' : 'var(--c-bg-card)', 
                   border: '1px solid #FF9EB5',
                   color: '#FF9EB5' 
                 }}
@@ -1182,7 +1252,7 @@ function App() {
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <AppstoreFilled style={{ fontSize: 18, color: '#FF9EB5' }} />
-                <Text style={{ fontSize: 18, fontWeight: 800, color: '#665555' }}>
+                <Text style={{ fontSize: 18, fontWeight: 800, color: 'var(--c-text-main)' }}>
                   数据总览
                 </Text>
               </div>
@@ -1192,7 +1262,7 @@ function App() {
                 onClick={handleClearGlobalStats}
                 disabled={backendSyncing}
                 style={{ 
-                  background: 'rgba(255,255,255,0.6)', 
+                  background: isDarkMode ? 'rgba(55,65,81,0.6)' : 'var(--c-bg-card)', 
                   border: '1px solid #FF9EB5',
                   color: '#FF9EB5' 
                 }}
@@ -1206,7 +1276,7 @@ function App() {
                 <Col xs={12} sm={8} lg={4}>
                   <div className="stat-item">
                     <div style={{ 
-                      width: 48, height: 48, borderRadius: 16, background: '#FFF0F3', color: '#FF9EB5',
+                      width: 48, height: 48, borderRadius: 16, background: 'var(--c-primary-light)', color: '#FF9EB5',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, marginBottom: 12,
                       boxShadow: '0 4px 0 #FFB7C5, 0 4px 8px rgba(255,158,181,0.2)', transform: 'rotate(-5deg)'
                     }}>
@@ -1219,7 +1289,7 @@ function App() {
                 <Col xs={12} sm={8} lg={4}>
                   <div className="stat-item">
                     <div style={{ 
-                      width: 48, height: 48, borderRadius: 16, background: '#E8F5E9', color: '#6BCB8A',
+                      width: 48, height: 48, borderRadius: 16, background: isDarkMode ? '#1e3a2f' : '#E8F5E9', color: '#6BCB8A',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, marginBottom: 12,
                       boxShadow: '0 4px 0 #A7E8BD, 0 4px 8px rgba(107,203,138,0.2)', transform: 'rotate(5deg)'
                     }}>
@@ -1232,7 +1302,7 @@ function App() {
                 <Col xs={12} sm={8} lg={4}>
                   <div className="stat-item">
                     <div style={{ 
-                      width: 48, height: 48, borderRadius: 16, background: '#FFF8D6', color: '#FFC857',
+                      width: 48, height: 48, borderRadius: 16, background: isDarkMode ? '#3a3015' : '#FFF8D6', color: '#FFC857',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, marginBottom: 12,
                       boxShadow: '0 4px 0 #FFE5A0, 0 4px 8px rgba(255,200,87,0.2)', transform: 'rotate(-5deg)'
                     }}>
@@ -1247,7 +1317,7 @@ function App() {
                 <Col xs={12} sm={8} lg={4}>
                   <div className="stat-item">
                     <div style={{ 
-                      width: 48, height: 48, borderRadius: 16, background: '#E0F7FA', color: '#00BCD4',
+                      width: 48, height: 48, borderRadius: 16, background: isDarkMode ? '#11353b' : '#E0F7FA', color: '#00BCD4',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, marginBottom: 12,
                       boxShadow: '0 4px 0 #A0E1E8, 0 4px 8px rgba(0,188,212,0.2)', transform: 'rotate(5deg)'
                     }}>
@@ -1260,7 +1330,7 @@ function App() {
                 <Col xs={12} sm={8} lg={4}>
                   <div className="stat-item">
                     <div style={{ 
-                      width: 48, height: 48, borderRadius: 16, background: '#FFF3E0', color: '#FF9800',
+                      width: 48, height: 48, borderRadius: 16, background: isDarkMode ? '#3b250d' : '#FFF3E0', color: '#FF9800',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, marginBottom: 12,
                       boxShadow: '0 4px 0 #FFCC80, 0 4px 8px rgba(255,152,0,0.2)', transform: 'rotate(-5deg)'
                     }}>
@@ -1273,7 +1343,7 @@ function App() {
                 <Col xs={12} sm={8} lg={4}>
                   <div className="stat-item">
                     <div style={{ 
-                      width: 48, height: 48, borderRadius: 16, background: '#F3E5F5', color: '#9C27B0',
+                      width: 48, height: 48, borderRadius: 16, background: isDarkMode ? '#2c1236' : '#F3E5F5', color: '#9C27B0',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, marginBottom: 12,
                       boxShadow: '0 4px 0 #E1BEE7, 0 4px 8px rgba(156,39,176,0.2)', transform: 'rotate(5deg)'
                     }}>
@@ -1291,12 +1361,12 @@ function App() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, paddingLeft: 4 }}>
             <div style={{ 
               width: 24, height: 24, borderRadius: '50%', background: '#FF9EB5', 
-              display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--c-bg-card)',
               fontSize: 12, fontWeight: 700
             }}>
               {tasks.length}
             </div>
-            <Text style={{ fontSize: 18, fontWeight: 800, color: '#665555' }}>
+            <Text style={{ fontSize: 18, fontWeight: 800, color: 'var(--c-text-main)' }}>
               进行中的任务
             </Text>
           </div>

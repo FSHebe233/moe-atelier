@@ -190,7 +190,7 @@ const CollectionGroupCard: React.FC<{
           zIndex: 2,
         }}>
           <div style={{
-            background: 'rgba(255,255,255,0.95)',
+            background: 'var(--c-bg-card)',
             padding: '4px 10px',
             borderRadius: 12,
             fontSize: 11,
@@ -203,7 +203,7 @@ const CollectionGroupCard: React.FC<{
           </div>
           {activeItem && (
             <div style={{
-              background: 'rgba(255,255,255,0.95)',
+              background: 'var(--c-bg-card)',
               padding: '4px 10px',
               borderRadius: 12,
               fontSize: 10,
@@ -228,7 +228,7 @@ const CollectionGroupCard: React.FC<{
                 width: 32,
                 height: 32,
                 borderRadius: '50%',
-                background: 'rgba(255,255,255,0.9)',
+                background: 'var(--c-bg-card)',
                 backdropFilter: 'blur(4px)',
                 display: 'flex',
                 alignItems: 'center',
@@ -253,7 +253,7 @@ const CollectionGroupCard: React.FC<{
                 width: 32,
                 height: 32,
                 borderRadius: '50%',
-                background: 'rgba(255,255,255,0.9)',
+                background: 'var(--c-bg-card)',
                 backdropFilter: 'blur(4px)',
                 display: 'flex',
                 alignItems: 'center',
@@ -293,7 +293,7 @@ const CollectionGroupCard: React.FC<{
                   width: 32,
                   height: 32,
                   borderRadius: '50%',
-                  background: 'rgba(255,255,255,0.95)',
+                  background: 'var(--c-bg-card)',
                   backdropFilter: 'blur(4px)',
                   display: 'flex',
                   alignItems: 'center',
@@ -313,7 +313,7 @@ const CollectionGroupCard: React.FC<{
                   width: 32,
                   height: 32,
                   borderRadius: '50%',
-                  background: 'rgba(255,255,255,0.95)',
+                  background: 'var(--c-bg-card)',
                   backdropFilter: 'blur(4px)',
                   display: 'flex',
                   alignItems: 'center',
@@ -342,7 +342,7 @@ const CollectionGroupCard: React.FC<{
             background: 'rgba(0,0,0,0.5)',
             borderRadius: 12,
             padding: '2px 10px',
-            color: '#fff',
+            color: 'var(--c-bg-card)',
             fontSize: 11,
             zIndex: 2,
           }}>
@@ -426,7 +426,7 @@ const CollectionGroupCard: React.FC<{
                     left: 0,
                     right: 0,
                     background: 'rgba(255, 158, 181, 0.9)',
-                    color: '#fff',
+                    color: 'var(--c-bg-card)',
                     fontSize: 8,
                     textAlign: 'center',
                     padding: '1px 0',
@@ -740,7 +740,7 @@ const CollectionBox: React.FC<CollectionBoxProps> = ({
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
             <Space>
               <InboxFilled style={{ color: COLORS.primary, fontSize: 18 }} />
-              <span style={{ fontWeight: 800, color: '#665555' }}>图片收纳盒</span>
+              <span style={{ fontWeight: 800, color: 'var(--c-text-main)' }}>图片收纳盒</span>
               <span style={{ 
                 background: COLORS.accent, 
                 padding: '2px 8px', 
@@ -758,7 +758,7 @@ const CollectionBox: React.FC<CollectionBoxProps> = ({
                 icon={<DeleteFilled />}
                 onClick={onClear}
                 style={{ 
-                  background: 'rgba(255,255,255,0.6)', 
+                  background: 'var(--c-bg-card)', 
                   border: '1px solid #FF9EB5', 
                   color: '#FF9EB5' 
                 }}
@@ -781,8 +781,8 @@ const CollectionBox: React.FC<CollectionBoxProps> = ({
             boxShadow: visible ? '-4px 0 16px rgba(0,0,0,0.05)' : 'none',
           },
         }}
-        bodyStyle={{ padding: 0, background: '#FFFFFF' }}
-        headerStyle={{ borderBottom: `1px solid ${COLORS.accent}`, background: 'rgba(255,255,255,0.95)' }}
+        bodyStyle={{ padding: 0, background: 'var(--c-bg-card)' }}
+        headerStyle={{ borderBottom: `1px solid ${COLORS.accent}`, background: 'var(--c-bg-card)' }}
         drawerRender={(node) => (
           <div className="collection-drawer-shell">
             <div

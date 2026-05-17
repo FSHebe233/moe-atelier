@@ -137,7 +137,7 @@ const ConfigDrawer: React.FC<ConfigDrawerProps> = ({
             width: 32,
             height: 32,
             borderRadius: 10,
-            background: '#FFF0F3',
+            background: 'var(--c-primary-light)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -146,7 +146,7 @@ const ConfigDrawer: React.FC<ConfigDrawerProps> = ({
         >
           <SettingFilled />
         </div>
-        <span style={{ fontWeight: 800, fontSize: 18, color: '#665555' }}>系统配置</span>
+        <span style={{ fontWeight: 800, fontSize: 18, color: 'var(--c-text-main)' }}>系统配置</span>
       </Space>
     }
     placement="right"
@@ -157,7 +157,7 @@ const ConfigDrawer: React.FC<ConfigDrawerProps> = ({
   >
     <Form layout="vertical" initialValues={config} onValuesChange={onConfigChange} form={form}>
       
-      <Form.Item label={<span style={{ fontWeight: 700, color: '#665555' }}>API 配置档</span>} style={{ marginBottom: 24 }}>
+      <Form.Item label={<span style={{ fontWeight: 700, color: 'var(--c-text-main)' }}>API 配置档</span>} style={{ marginBottom: 24 }}>
         {editingProfileId === activeProfileId ? (
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <Input 
@@ -195,7 +195,7 @@ const ConfigDrawer: React.FC<ConfigDrawerProps> = ({
 
       <div style={{ borderBottom: '1px solid #f0f0f0', marginBottom: 24 }} />
 
-      <Form.Item label={<span style={{ fontWeight: 700, color: '#665555' }}>API 格式</span>}>
+      <Form.Item label={<span style={{ fontWeight: 700, color: 'var(--c-text-main)' }}>API 格式</span>}>
         <Form.Item name="apiFormat" noStyle>
           <Radio.Group optionType="button" buttonStyle="solid">
             <Radio.Button value="openai">OpenAI</Radio.Button>
@@ -212,7 +212,7 @@ const ConfigDrawer: React.FC<ConfigDrawerProps> = ({
             return null;
           }
           return (
-            <Form.Item label={<span style={{ fontWeight: 700, color: '#665555' }}>API 版本</span>}>
+            <Form.Item label={<span style={{ fontWeight: 700, color: 'var(--c-text-main)' }}>API 版本</span>}>
               <Form.Item name="apiVersion" noStyle>
                 <AutoComplete
                   options={API_VERSION_OPTIONS.map((version) => ({ value: version }))}
@@ -229,7 +229,7 @@ const ConfigDrawer: React.FC<ConfigDrawerProps> = ({
       </Form.Item>
 
       <Form.Item
-        label={<span style={{ fontWeight: 700, color: '#665555' }}>API 接口地址</span>}
+        label={<span style={{ fontWeight: 700, color: 'var(--c-text-main)' }}>API 接口地址</span>}
         shouldUpdate={(prev, cur) => prev.apiFormat !== cur.apiFormat}
       >
         {({ getFieldValue }) => {
@@ -243,11 +243,11 @@ const ConfigDrawer: React.FC<ConfigDrawerProps> = ({
         }}
       </Form.Item>
 
-      <Form.Item name="apiKey" label={<span style={{ fontWeight: 700, color: '#665555' }}>API 密钥</span>}>
+      <Form.Item name="apiKey" label={<span style={{ fontWeight: 700, color: 'var(--c-text-main)' }}>API 密钥</span>}>
         <Input.Password size="large" placeholder="sk-..." prefix={<SafetyCertificateFilled style={{ color: '#FF9EB5' }} />} />
       </Form.Item>
 
-      <Form.Item label={<span style={{ fontWeight: 700, color: '#665555' }}>模型名称</span>} style={{ marginBottom: 48 }}>
+      <Form.Item label={<span style={{ fontWeight: 700, color: 'var(--c-text-main)' }}>模型名称</span>} style={{ marginBottom: 48 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ flex: 1 }}>
             <Form.Item name="model" noStyle>
@@ -278,14 +278,14 @@ const ConfigDrawer: React.FC<ConfigDrawerProps> = ({
 
       <div
         style={{
-          background: '#F8F9FA',
+          background: 'var(--c-bg)',
           padding: '16px',
           borderRadius: 16,
           marginBottom: 24,
-          border: '1px solid #eee',
+          border: '1px solid var(--c-primary-light)',
         }}
       >
-        <Form.Item label={<span style={{ fontWeight: 700, color: '#665555' }}>流式传输</span>} style={{ marginBottom: 12 }}>
+        <Form.Item label={<span style={{ fontWeight: 700, color: 'var(--c-text-main)' }}>流式传输</span>} style={{ marginBottom: 12 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Text type="secondary" style={{ fontSize: 13 }}>
               启用实时生成进度更新
@@ -296,7 +296,7 @@ const ConfigDrawer: React.FC<ConfigDrawerProps> = ({
           </div>
         </Form.Item>
 
-        <Form.Item label={<span style={{ fontWeight: 700, color: '#665555' }}>图片收纳</span>} style={{ marginBottom: 0 }}>
+        <Form.Item label={<span style={{ fontWeight: 700, color: 'var(--c-text-main)' }}>图片收纳</span>} style={{ marginBottom: 0 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Text type="secondary" style={{ fontSize: 13 }}>
               自动收纳生成的图片和提示词
@@ -320,14 +320,14 @@ const ConfigDrawer: React.FC<ConfigDrawerProps> = ({
               items={[
                 {
                   key: '1',
-                  label: <span style={{ fontWeight: 700, color: '#8B5E34' }}>高级设置（Gemini / Vertex）</span>,
-                  style: { background: '#FFF7E6', borderRadius: 16, border: '1px dashed #FFD591', marginBottom: 24 },
+                  label: <span style={{ fontWeight: 700, color: 'var(--c-warning-dark)' }}>高级设置（Gemini / Vertex）</span>,
+                  style: { background: 'var(--c-bg)', borderRadius: 16, border: '1px dashed var(--c-warning-dark)', marginBottom: 24 },
                   children: (
                     <div>
-                      <Text style={{ fontWeight: 600, color: '#8B5E34', display: 'block', marginBottom: 8 }}>思考配置</Text>
+                      <Text style={{ fontWeight: 600, color: 'var(--c-warning-dark)', display: 'block', marginBottom: 8 }}>思考配置</Text>
                       <Form.Item
                         name="includeThoughts"
-                        label={<span style={{ fontWeight: 600, color: '#665555' }}>启用思考</span>}
+                        label={<span style={{ fontWeight: 600, color: 'var(--c-text-main)' }}>启用思考</span>}
                         valuePropName="checked"
                         style={{ marginBottom: 8 }}
                       >
@@ -335,7 +335,7 @@ const ConfigDrawer: React.FC<ConfigDrawerProps> = ({
                       </Form.Item>
                       <Form.Item
                         name="thinkingBudget"
-                        label={<span style={{ fontWeight: 600, color: '#665555' }}>思考预算 (Tokens)</span>}
+                        label={<span style={{ fontWeight: 600, color: 'var(--c-text-main)' }}>思考预算 (Tokens)</span>}
                         style={{ marginBottom: 0 }}
                       >
                         <LazySliderInput min={0} max={8192} step={128} />
@@ -346,7 +346,7 @@ const ConfigDrawer: React.FC<ConfigDrawerProps> = ({
                       <Text style={{ fontWeight: 600, color: '#8B5E34', display: 'block', marginBottom: 8 }}>图像参数</Text>
                       <Form.Item
                         name="includeImageConfig"
-                        label={<span style={{ fontWeight: 600, color: '#665555' }}>启用图像配置</span>}
+                        label={<span style={{ fontWeight: 600, color: 'var(--c-text-main)' }}>启用图像配置</span>}
                         valuePropName="checked"
                         style={{ marginBottom: 8 }}
                       >
@@ -354,7 +354,7 @@ const ConfigDrawer: React.FC<ConfigDrawerProps> = ({
                       </Form.Item>
                       <Form.Item
                         name={['imageConfig', 'imageSize']}
-                        label={<span style={{ fontWeight: 600, color: '#665555' }}>分辨率</span>}
+                        label={<span style={{ fontWeight: 600, color: 'var(--c-text-main)' }}>分辨率</span>}
                         style={{ marginBottom: 8 }}
                       >
                         <Radio.Group optionType="button" buttonStyle="solid">
@@ -367,7 +367,7 @@ const ConfigDrawer: React.FC<ConfigDrawerProps> = ({
                       </Form.Item>
                       <Form.Item
                         name={['imageConfig', 'aspectRatio']}
-                        label={<span style={{ fontWeight: 600, color: '#665555' }}>比例</span>}
+                        label={<span style={{ fontWeight: 600, color: 'var(--c-text-main)' }}>比例</span>}
                         style={{ marginBottom: 8 }}
                       >
                         <Select options={ASPECT_RATIO_OPTIONS.map((value) => ({ value, label: value }))} />
@@ -375,7 +375,7 @@ const ConfigDrawer: React.FC<ConfigDrawerProps> = ({
 
                       <Form.Item
                         name="webpQuality"
-                        label={<span style={{ fontWeight: 600, color: '#665555' }}>WebP 质量</span>}
+                        label={<span style={{ fontWeight: 600, color: 'var(--c-text-main)' }}>WebP 质量</span>}
                         style={{ marginBottom: 8 }}
                       >
                         <LazySliderInput min={50} max={100} step={1} />
@@ -383,7 +383,7 @@ const ConfigDrawer: React.FC<ConfigDrawerProps> = ({
 
                       <Form.Item
                         name="useResponseModalities"
-                        label={<span style={{ fontWeight: 600, color: '#665555' }}>响应模态</span>}
+                        label={<span style={{ fontWeight: 600, color: 'var(--c-text-main)' }}>响应模态</span>}
                         valuePropName="checked"
                         extra="TEXT + IMAGE（官方端点可用）"
                         style={{ marginBottom: 0 }}
@@ -396,7 +396,7 @@ const ConfigDrawer: React.FC<ConfigDrawerProps> = ({
                       <Text style={{ fontWeight: 600, color: '#8B5E34', display: 'block', marginBottom: 8 }}>安全设置</Text>
                       <Form.Item
                         name="includeSafetySettings"
-                        label={<span style={{ fontWeight: 600, color: '#665555' }}>启用安全设置</span>}
+                        label={<span style={{ fontWeight: 600, color: 'var(--c-text-main)' }}>启用安全设置</span>}
                         valuePropName="checked"
                         style={{ marginBottom: 8 }}
                       >
@@ -406,7 +406,7 @@ const ConfigDrawer: React.FC<ConfigDrawerProps> = ({
                         <Col span={12}>
                           <Form.Item
                             name={['safety', 'HARM_CATEGORY_HARASSMENT']}
-                            label={<span style={{ fontWeight: 600, color: '#665555' }}>骚扰内容</span>}
+                            label={<span style={{ fontWeight: 600, color: 'var(--c-text-main)' }}>骚扰内容</span>}
                             style={{ marginBottom: 8 }}
                           >
                             <Select options={SAFETY_OPTIONS} />
@@ -415,7 +415,7 @@ const ConfigDrawer: React.FC<ConfigDrawerProps> = ({
                         <Col span={12}>
                           <Form.Item
                             name={['safety', 'HARM_CATEGORY_HATE_SPEECH']}
-                            label={<span style={{ fontWeight: 600, color: '#665555' }}>仇恨言论</span>}
+                            label={<span style={{ fontWeight: 600, color: 'var(--c-text-main)' }}>仇恨言论</span>}
                             style={{ marginBottom: 8 }}
                           >
                             <Select options={SAFETY_OPTIONS} />
@@ -424,7 +424,7 @@ const ConfigDrawer: React.FC<ConfigDrawerProps> = ({
                         <Col span={12}>
                           <Form.Item
                             name={['safety', 'HARM_CATEGORY_SEXUALLY_EXPLICIT']}
-                            label={<span style={{ fontWeight: 600, color: '#665555' }}>色情内容</span>}
+                            label={<span style={{ fontWeight: 600, color: 'var(--c-text-main)' }}>色情内容</span>}
                             style={{ marginBottom: 8 }}
                           >
                             <Select options={SAFETY_OPTIONS} />
@@ -433,7 +433,7 @@ const ConfigDrawer: React.FC<ConfigDrawerProps> = ({
                         <Col span={12}>
                           <Form.Item
                             name={['safety', 'HARM_CATEGORY_DANGEROUS_CONTENT']}
-                            label={<span style={{ fontWeight: 600, color: '#665555' }}>危险内容</span>}
+                            label={<span style={{ fontWeight: 600, color: 'var(--c-text-main)' }}>危险内容</span>}
                             style={{ marginBottom: 8 }}
                           >
                             <Select options={SAFETY_OPTIONS} />
@@ -442,7 +442,7 @@ const ConfigDrawer: React.FC<ConfigDrawerProps> = ({
                         <Col span={12}>
                           <Form.Item
                             name={['safety', 'HARM_CATEGORY_CIVIC_INTEGRITY']}
-                            label={<span style={{ fontWeight: 600, color: '#665555' }}>公民诚信</span>}
+                            label={<span style={{ fontWeight: 600, color: 'var(--c-text-main)' }}>公民诚信</span>}
                             style={{ marginBottom: 0 }}
                           >
                             <Select options={SAFETY_OPTIONS} />
@@ -471,14 +471,14 @@ const ConfigDrawer: React.FC<ConfigDrawerProps> = ({
 
       <div
         style={{
-          background: '#F1F7FF',
+          background: 'var(--c-bg)',
           padding: '16px',
           borderRadius: 16,
           marginBottom: 24,
-          border: '1px dashed #91C1FF',
+          border: '1px dashed var(--c-info)',
         }}
       >
-        <Form.Item label={<span style={{ fontWeight: 700, color: '#665555' }}>后端模式</span>} style={{ marginBottom: 8 }}>
+        <Form.Item label={<span style={{ fontWeight: 700, color: 'var(--c-text-main)' }}>后端模式</span>} style={{ marginBottom: 8 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
             <Text type="secondary" style={{ fontSize: 13, flex: 1 }}>
               开启后将配置与任务缓存到服务器，支持多端同步
@@ -535,10 +535,10 @@ const ConfigDrawer: React.FC<ConfigDrawerProps> = ({
         </div>
       </div>
 
-      <div style={{ marginTop: 24, padding: 16, background: '#FFF8E1', borderRadius: 16, border: '1px dashed #FFC107' }}>
+      <div style={{ marginTop: 24, padding: 16, background: 'var(--c-bg)', borderRadius: 16, border: '1px dashed var(--c-warning-dark)' }}>
         <Space align="start">
-          <ThunderboltFilled style={{ color: '#FFC107', marginTop: 4, fontSize: 16 }} />
-          <Text type="secondary" style={{ fontSize: 13, color: '#8D6E63', lineHeight: 1.5 }}>
+          <ThunderboltFilled style={{ color: 'var(--c-warning-dark)', marginTop: 4, fontSize: 16 }} />
+          <Text type="secondary" style={{ fontSize: 13, color: 'var(--c-text-main)', lineHeight: 1.5 }}>
             设置将自动应用于所有活动任务窗口。请确保您的 API 密钥有足够的配额。
           </Text>
         </Space>

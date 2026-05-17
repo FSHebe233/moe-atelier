@@ -61,7 +61,7 @@ const LazySliderInput: React.FC<LazySliderProps> = ({
       <Col span={8}>
         <div
           style={{
-            background: '#fff',
+            background: 'var(--c-bg-card)',
             padding: '2px 8px',
             borderRadius: 12,
             display: 'flex',
@@ -79,7 +79,7 @@ const LazySliderInput: React.FC<LazySliderProps> = ({
               width: '100%',
               border: 'none',
               textAlign: 'center',
-              color: '#665555',
+              color: 'var(--c-text-main)',
               fontWeight: 700,
               background: 'transparent',
               outline: 'none',

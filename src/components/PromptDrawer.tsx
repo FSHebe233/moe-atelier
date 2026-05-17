@@ -236,7 +236,7 @@ const PromptCard: React.FC<PromptCardProps> = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div style={{ position: 'relative', aspectRatio: '1/1', background: '#FAFAFA', overflow: 'hidden' }}>
+      <div style={{ position: 'relative', aspectRatio: '1/1', background: 'var(--c-bg-input)', overflow: 'hidden' }}>
         {prompt.images && prompt.images.length > 0 ? (
           <>
             <div style={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -269,7 +269,7 @@ const PromptCard: React.FC<PromptCardProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  background: 'rgba(255,255,255,0.2)',
+                  background: 'var(--c-bg-card)',
                   backdropFilter: 'blur(4px)',
                   cursor: 'pointer',
                   zIndex: 5
@@ -280,7 +280,7 @@ const PromptCard: React.FC<PromptCardProps> = ({
                   background: 'rgba(0,0,0,0.6)',
                   borderRadius: 20,
                   padding: '6px 16px',
-                  color: '#fff',
+                  color: 'var(--c-text-white)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 6,
@@ -308,7 +308,7 @@ const PromptCard: React.FC<PromptCardProps> = ({
           <div style={{ pointerEvents: 'auto' }}>
             {timeLabel && (
               <div style={{ 
-                background: 'rgba(255,255,255,0.9)', 
+                background: 'var(--c-bg-card)', 
                 padding: '2px 8px', 
                 borderRadius: 10,
                 fontSize: 10,
@@ -326,7 +326,7 @@ const PromptCard: React.FC<PromptCardProps> = ({
           <div style={{ pointerEvents: 'auto' }}>
             {isNew && (
               <div style={{ 
-                background: COLORS.new, color: '#fff',
+                background: COLORS.new, color: 'var(--c-text-white)',
                 padding: '2px 6px', borderRadius: 10,
                 fontSize: 10, fontWeight: 800,
                 boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
@@ -345,7 +345,7 @@ const PromptCard: React.FC<PromptCardProps> = ({
             left: 10,
             padding: '2px 8px',
             borderRadius: 10,
-            background: 'rgba(255,255,255,0.9)',
+            background: 'var(--c-bg-card)',
             color: COLORS.text,
             fontSize: 10,
             fontWeight: 700,
@@ -375,14 +375,14 @@ const PromptCard: React.FC<PromptCardProps> = ({
                   width: idx === activeImageIndex ? 16 : 6,
                   height: 4,
                   borderRadius: 2,
-                  background: idx === activeImageIndex ? '#fff' : 'rgba(255,255,255,0.6)',
+                  background: idx === activeImageIndex ? 'var(--c-bg-card)' : 'var(--c-bg-card)',
                   transition: 'all 0.3s ease',
                   boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
                 }}
               />
             ))}
             {prompt.images.length > 5 && (
-               <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'rgba(255,255,255,0.6)' }} />
+               <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--c-bg-card)' }} />
             )}
           </div>
         )}
@@ -391,7 +391,7 @@ const PromptCard: React.FC<PromptCardProps> = ({
         <div 
           style={{ 
             position: 'absolute', bottom: 8, right: 8,
-            background: 'rgba(255,255,255,0.9)',
+            background: 'var(--c-bg-card)',
             width: 28, height: 28, borderRadius: '50%',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             cursor: 'pointer',
@@ -879,6 +879,7 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
       ),
       okText: '前往投稿',
       cancelText: '取消',
+      className: 'moe-modal',
       onOk: () => {
         window.open('https://bmzxdlj.cn', '_blank');
       },
@@ -1140,7 +1141,7 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
       overflowY: isMobile ? 'visible' : 'auto',
       overflowX: 'hidden',
       padding: isMobile ? 20 : 24,
-      background: isMobile ? 'transparent' : 'rgba(255, 255, 255, 0.6)',
+      background: isMobile ? 'transparent' : 'var(--c-bg-card)',
       backdropFilter: isMobile ? 'none' : 'blur(10px)',
       borderRight: isMobile ? 'none' : `1px solid ${COLORS.accent}`
     }}>
@@ -1159,7 +1160,7 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center' }}>
-                <CompassFilled style={{ color: contributorActiveSection === 'all' ? '#fff' : '#FF9EB5' }} />
+                <CompassFilled style={{ color: contributorActiveSection === 'all' ? 'var(--c-bg-card)' : 'var(--c-primary)' }} />
                 <span style={{ marginLeft: 8 }}>全部</span>
               </div>
               <div style={{ marginLeft: 'auto' }}>
@@ -1184,8 +1185,8 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
                     count={section.count}
                     overflowCount={99999}
                     style={{
-                      backgroundColor: contributorActiveSection === section.id ? COLORS.primary : '#F0F0F0',
-                      color: contributorActiveSection === section.id ? '#fff' : COLORS.textLight
+                      backgroundColor: contributorActiveSection === section.id ? COLORS.primary : 'var(--c-primary-light)',
+                      color: contributorActiveSection === section.id ? 'var(--c-bg-card)' : COLORS.textLight
                     }}
                   />
                 </div>
@@ -1219,7 +1220,7 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
                   padding: '4px 2px',
                   margin: 0,
                   background: contributorSelectedTags.includes(tag) ? COLORS.primary : 'transparent',
-                  color: contributorSelectedTags.includes(tag) ? '#fff' : COLORS.textLight,
+                  color: contributorSelectedTags.includes(tag) ? 'var(--c-bg-card)' : COLORS.textLight,
                   width: '100%',
                   display: 'flex',
                   justifyContent: 'center',
@@ -1244,7 +1245,7 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
       overflowY: 'auto',
       overflowX: 'hidden',
       padding: isMobile ? 20 : 24,
-      background: isMobile ? 'transparent' : 'rgba(255, 255, 255, 0.6)',
+      background: isMobile ? 'transparent' : 'var(--c-bg-card)',
       backdropFilter: isMobile ? 'none' : 'blur(10px)',
       borderRight: isMobile ? 'none' : `1px solid ${COLORS.accent}`
     }}>
@@ -1271,7 +1272,7 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
         </Title>}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {[
-            { id: 'all', label: '全部', color: '#FF9EB5', icon: CompassFilled, badge: allPrompts.length },
+            { id: 'all', label: '全部', color: 'var(--c-primary)', icon: CompassFilled, badge: allPrompts.length },
             { id: 'new', label: '最新', color: COLORS.new, icon: FireFilled, badge: newPrompts.length },
             { id: 'favorites', label: '我的收藏', color: COLORS.gold, icon: StarFilled, badge: favorites.length }
           ].map(item => {
@@ -1292,7 +1293,7 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <IconComponent style={{ color: isActive ? '#fff' : item.color }} />
+                  <IconComponent style={{ color: isActive ? 'var(--c-bg-card)' : item.color }} />
                   <span style={{ marginLeft: 8 }}>{item.label}</span>
                 </div>
                 {item.badge !== undefined ? <div style={{ marginLeft: 'auto' }}><Badge count={item.badge} overflowCount={99999} style={{ backgroundColor: badgeColor }} /></div> : null}
@@ -1318,8 +1319,8 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
                       count={section.prompts.length} 
                       overflowCount={99999} 
                       style={{ 
-                        backgroundColor: activeTab === section.id ? COLORS.primary : '#F0F0F0',
-                        color: activeTab === section.id ? '#fff' : COLORS.textLight
+                        backgroundColor: activeTab === section.id ? COLORS.primary : 'var(--c-primary-light)',
+                        color: activeTab === section.id ? 'var(--c-bg-card)' : COLORS.textLight
                       }} 
                     />
                   </div>
@@ -1353,7 +1354,7 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
                 padding: '4px 2px',
                 margin: 0,
                 background: selectedTags.includes(tag) ? COLORS.primary : 'transparent',
-                color: selectedTags.includes(tag) ? '#fff' : COLORS.textLight,
+                color: selectedTags.includes(tag) ? 'var(--c-bg-card)' : COLORS.textLight,
                 width: '100%',
                 display: 'flex',
                 justifyContent: 'center',
@@ -1379,7 +1380,7 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
                 <Space align="center" className="prompt-drawer-title-left">
                   <div style={{ 
                     width: 32, height: 32, borderRadius: 8, background: COLORS.primary, 
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' 
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--c-text-white)' 
                   }}>
                     <AppstoreFilled />
                   </div>
@@ -1485,7 +1486,7 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
               <Space align="center" className="prompt-drawer-title-left">
                 <div style={{ 
                   width: 32, height: 32, borderRadius: 8, background: COLORS.primary, 
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' 
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--c-text-white)' 
                 }}>
                   <AppstoreFilled />
                 </div>
@@ -1550,7 +1551,7 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
             flexDirection: 'column'
           },
           header: {
-            background: 'rgba(255,255,255,0.9)',
+            background: 'var(--c-bg-card)',
             borderBottom: `1px solid ${COLORS.accent}`,
             backdropFilter: 'blur(10px)',
             transition: 'height 0.3s ease',
@@ -1763,7 +1764,7 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
                       icon={<UserOutlined />} 
                       src={contributorPrompts[0]?.images?.[0]}
                       style={{ 
-                        backgroundColor: '#fff', 
+                        backgroundColor: 'var(--c-bg-card)', 
                         boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
                         border: '4px solid #fff'
                       }} 
@@ -1806,7 +1807,7 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
                 display: 'flex', 
                 flexDirection: isMobile ? 'column' : 'row',
                 overflow: 'hidden',
-                background: 'rgba(255,255,255,0.5)'
+                background: 'var(--c-bg-card)'
               }}>
                 {/* Filters Sidebar */}
                 {!isMobile && (
@@ -1917,7 +1918,7 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
         closeIcon={
           <div style={{ 
             background: 'rgba(0,0,0,0.1)', borderRadius: '50%', width: 30, height: 30, 
-            display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' 
+            display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--c-text-white)' 
           }}><div style={{marginTop: -2}}>×</div></div>
         }
       >
@@ -1927,12 +1928,12 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
             flexDirection: (isMobile || imageAspectRatio === 'landscape') ? 'column' : 'row',
             height: isMobile ? '100%' : '80vh',
             maxHeight: isMobile ? '100%' : 800,
-            background: '#fff'
+            background: 'var(--c-bg-card)'
           }}>
             {/* Image Area */}
             <div style={{ 
               flex: (isMobile || imageAspectRatio === 'landscape') ? '0 0 auto' : '1.5',
-              background: '#000',
+              background: 'var(--c-bg-input)',
               display: 'flex', 
               flexDirection: 'column',
               alignItems: 'center', 
@@ -1983,7 +1984,7 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
                         <div 
                           style={{ 
                             width: 32, height: 32, borderRadius: '50%',
-                            background: 'rgba(255,255,255,0.12)',
+                            background: 'rgba(255,255,255,0.2)',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             cursor: 'pointer', color: '#fff'
                           }}
@@ -1997,7 +1998,7 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
                         <div 
                           style={{ 
                             width: 32, height: 32, borderRadius: '50%',
-                            background: 'rgba(255,255,255,0.12)',
+                            background: 'rgba(255,255,255,0.2)',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             cursor: 'pointer', color: '#fff'
                           }}
@@ -2078,22 +2079,22 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}>
                 {currentPreviewData.notes && (
                   <div style={{ 
-                    background: '#FFFBE6', 
-                    border: '1px solid #FFE58F',
+                    background: 'var(--c-bg)', 
+                    border: '1px solid var(--c-warning-dark)',
                     borderRadius: 12,
                     padding: '12px 16px'
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                      <InfoCircleFilled style={{ color: '#FAAD14', fontSize: 16 }} />
-                      <div style={{ fontWeight: 600, color: '#D48806', fontSize: 13 }}>投稿者备注</div>
+                      <InfoCircleFilled style={{ color: 'var(--c-warning-dark)', fontSize: 16 }} />
+                      <div style={{ fontWeight: 600, color: 'var(--c-text-main)', fontSize: 13 }}>投稿者备注</div>
                     </div>
-                    <Text style={{ color: '#D46B08', fontSize: 13, lineHeight: 1.5, display: 'block' }}>{currentPreviewData.notes}</Text>
+                    <Text style={{ color: 'var(--c-text-main)', fontSize: 13, lineHeight: 1.5, display: 'block' }}>{currentPreviewData.notes}</Text>
                   </div>
                 )}
 
                 {currentPreviewData.refs && currentPreviewData.refs.length > 0 && (
                   <div style={{ 
-                    background: '#fff', 
+                    background: 'var(--c-bg-card)', 
                     borderRadius: 16,
                     border: `1px solid ${COLORS.accent}`,
                     padding: '10px 12px',
@@ -2101,7 +2102,7 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
                     flexDirection: 'column',
                     gap: 8
                   }}>
-                    <Text type="secondary" style={{ fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 6, color: COLORS.textLight }}>
+                    <Text type="secondary" style={{ fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--c-text-light)' }}>
                       <FileTextOutlined /> 参考图
                     </Text>
                     <Image.PreviewGroup>
@@ -2116,7 +2117,7 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
                               overflow: 'hidden',
                               border: `1px solid ${COLORS.accent}`,
                               flex: '0 0 auto',
-                              background: '#fff'
+                              background: 'var(--c-bg-card)'
                             }}
                           >
                             <Image
@@ -2134,7 +2135,7 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
                 )}
 
                 <div style={{ 
-                  background: '#fff', 
+                  background: 'var(--c-bg-card)', 
                   borderRadius: 16, 
                   border: `1px solid ${COLORS.accent}`,
                   boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)',
@@ -2149,10 +2150,10 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     padding: '6px 16px',
-                    background: '#fff',
+                    background: 'var(--c-bg-card)',
                     flexShrink: 0
                   }}>
-                    <Text type="secondary" style={{ fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 6, color: COLORS.textLight }}>
+                    <Text type="secondary" style={{ fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--c-text-light)' }}>
                       <FileTextOutlined /> 提示词内容
                     </Text>
                     <Tooltip title="复制内容">
@@ -2185,7 +2186,7 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
                     {previewPrompt.tags?.map(tag => (
                       <Tag key={tag} style={{ 
                         padding: '4px 10px', fontSize: 12, borderRadius: 10, 
-                        border: 'none', background: '#fff', color: COLORS.textLight 
+                        border: 'none', background: 'var(--c-bg-card)', color: COLORS.textLight 
                       }}>#{tag}</Tag>
                     ))}
                   </div>
@@ -2295,7 +2296,7 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
         
         .custom-search-input.ant-input-affix-wrapper-focused,
         .custom-search-input.ant-input-affix-wrapper:focus-within {
-          border-color: #FF9EB5;
+          border-color: var(--c-primary);
           box-shadow: 0 0 0 2px rgba(255, 158, 181, 0.2);
         }
 
@@ -2365,14 +2366,14 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
           opacity: 0.5;
         }
         .cute-pagination-nav:not(:disabled):hover {
-          background: #FFF0F5 !important;
+          background: var(--c-bg-card) !important;
           border-radius: 50%;
         }
         .cute-pagination-pages {
           display: flex;
           align-items: center;
           gap: 4px;
-          background: rgba(255, 255, 255, 0.6);
+          background: var(--c-bg-card);
           backdrop-filter: blur(4px);
           padding: 4px;
           border-radius: 20px;
@@ -2393,11 +2394,11 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
         }
         .cute-pagination-item:hover {
           color: ${COLORS.primary};
-          background: rgba(255, 158, 181, 0.1);
+          background: var(--c-bg-card);
         }
         .cute-pagination-item.active {
           background: ${COLORS.primary};
-          color: #fff;
+          color: var(--c-text-white);
           box-shadow: 0 2px 8px rgba(255, 158, 181, 0.4);
           transform: scale(1.05);
         }
