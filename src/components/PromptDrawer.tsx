@@ -642,8 +642,6 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
   const [previewPrompt, setPreviewPrompt] = useState<ExtendedPromptItem | null>(null);
   const [previewImageIndex, setPreviewImageIndex] = useState(0);
   const [activeVariantIndex, setActiveVariantIndex] = useState(0); // 0: Main, 1+: Variants
-  const [imageAspectRatio, setImageAspectRatio] = useState<'landscape' | 'portrait' | null>(null);
-  const [modalWidth, setModalWidth] = useState<string | number>('min(1000px, 90vw)');
   const [revealedImages, setRevealedImages] = useState<Set<string>>(new Set());
 
   // Refs for contributor scroll animation
@@ -1055,8 +1053,6 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
     setPreviewPrompt(prompt);
     setPreviewImageIndex(0);
     setActiveVariantIndex(0);
-    setImageAspectRatio(null); // Reset layout detection
-    setModalWidth('min(1000px, 90vw)');
   };
 
   const currentPreviewData = useMemo(() => {
@@ -1085,53 +1081,6 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
     if (!previewPrompt) return '';
     return formatPromptTime(previewPrompt);
   }, [previewPrompt]);
-
-  // Layout Detection
-  useEffect(() => {
-    if (!currentPreviewData || currentPreviewData.images.length === 0) return;
-    
-    const img = new window.Image();
-    img.src = currentPreviewData.images[previewImageIndex];
-    img.onload = () => {
-      const isLandscape = img.naturalWidth > img.naturalHeight;
-      if (isLandscape) {
-        setImageAspectRatio('landscape');
-        if (!isMobile) {
-          const vh = window.innerHeight;
-          const targetHeight = vh * 0.45; // 45vh
-          const ratio = img.naturalWidth / img.naturalHeight;
-          let targetWidth = targetHeight * ratio;
-          
-          // Limits
-          const minW = 600;
-          const maxW = Math.min(1200, window.innerWidth * 0.95);
-          
-          setModalWidth(Math.max(minW, Math.min(targetWidth, maxW)));
-        }
-      } else {
-        setImageAspectRatio('portrait');
-        if (!isMobile) {
-          const vh = window.innerHeight;
-          const targetImgHeight = vh * 0.8; // 80vh
-          const ratio = img.naturalWidth / img.naturalHeight;
-          const targetImgWidth = targetImgHeight * ratio;
-          
-          // Left side is flex: 1.5, Right side is flex: 1. Total flex: 2.5
-          // Left width ratio ≈ 0.6
-          // We want LeftWidth >= targetImgWidth to avoid vertical scaling
-          let targetTotalWidth = targetImgWidth / 0.55; // Use 0.55 to be safe (left width is ~55-60%)
-
-          // Limits
-          const minW = 900; // Ensure right side has enough space
-          const maxW = Math.min(1400, window.innerWidth * 0.95);
-
-          setModalWidth(Math.max(minW, Math.min(targetTotalWidth, maxW)));
-        } else {
-          setModalWidth('100%');
-        }
-      }
-    };
-  }, [currentPreviewData, previewImageIndex, isMobile]);
 
   const renderContributorSidebar = () => (
     <div style={{ 
@@ -1891,22 +1840,23 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
         open={!!previewPrompt}
         onCancel={() => setPreviewPrompt(null)}
         footer={null}
-        width={isMobile ? '100%' : modalWidth}
-        centered
+        width={isMobile ? '100vw' : 'min(1220px, calc(100vw - 48px))'}
+        centered={!isMobile}
         destroyOnClose
         style={isMobile ? { maxWidth: '100vw', margin: 0, padding: 0, top: 0 } : {}}
         styles={{ 
           content: { 
             padding: 0, 
-            borderRadius: isMobile ? 0 : 20, 
+            borderRadius: isMobile ? 0 : 20,
             overflow: 'hidden',
-            height: isMobile ? '100vh' : 'auto',
-            maxHeight: isMobile ? '100vh' : '90vh',
+            height: isMobile ? '100dvh' : 'min(780px, calc(100dvh - 48px))',
+            maxHeight: isMobile ? '100dvh' : 'calc(100dvh - 48px)',
             display: 'flex',
-            flexDirection: 'column'
+            flexDirection: 'column',
+            background: '#fff'
           },
           body: { 
-            height: isMobile ? '100%' : 'auto',
+            height: '100%',
             padding: 0,
             overflow: 'hidden',
             display: 'flex',
@@ -1916,97 +1866,125 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
         }}
         closeIcon={
           <div style={{ 
-            background: 'rgba(0,0,0,0.1)', borderRadius: '50%', width: 30, height: 30, 
-            display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' 
+            background: 'rgba(255,255,255,0.95)',
+            border: '1px solid rgba(0,0,0,0.06)',
+            borderRadius: '50%',
+            width: 36,
+            height: 36,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#8D6E63',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+            fontSize: 22
           }}><div style={{marginTop: -2}}>×</div></div>
         }
       >
         {previewPrompt && currentPreviewData && (
           <div style={{ 
             display: 'flex', 
-            flexDirection: (isMobile || imageAspectRatio === 'landscape') ? 'column' : 'row',
-            height: isMobile ? '100%' : '80vh',
-            maxHeight: isMobile ? '100%' : 800,
-            background: '#fff'
+            flexDirection: isMobile ? 'column' : 'row',
+            height: '100%',
+            minHeight: 0,
+            background: '#fff',
+            overflow: 'hidden'
           }}>
             {/* Image Area */}
             <div style={{ 
-              flex: (isMobile || imageAspectRatio === 'landscape') ? '0 0 auto' : '1.5',
-              background: '#000',
+              flex: isMobile ? '0 0 auto' : '0 0 58%',
+              background: '#fff',
               display: 'flex', 
               flexDirection: 'column',
               alignItems: 'center', 
               justifyContent: 'center',
               position: 'relative',
               overflow: 'hidden',
-              height: (isMobile || imageAspectRatio === 'landscape') ? 'auto' : '100%',
-              maxHeight: (isMobile || imageAspectRatio === 'landscape') ? '60vh' : 'unset',
-              width: (isMobile || imageAspectRatio === 'landscape') ? '100%' : '55%'
+              height: isMobile ? '42dvh' : '100%',
+              minHeight: isMobile ? 260 : 0,
+              maxHeight: isMobile ? 460 : 'unset',
+              width: isMobile ? '100%' : 'auto',
+              borderRight: isMobile ? 'none' : '1px solid #F5F1F1',
+              borderBottom: isMobile ? '1px solid #F5F1F1' : 'none'
             }}>
               {currentPreviewData.images.length > 0 ? (
                 <>
-                  <div style={{ width: '100%', flex: (isMobile || imageAspectRatio === 'landscape') ? '0 0 auto' : 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                  <div style={{ width: '100%', height: '100%', minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
                     <Image
                       src={currentPreviewData.images[previewImageIndex]}
                       style={{ 
                         width: '100%', 
-                        height: (isMobile || imageAspectRatio === 'landscape') ? 'auto' : '100%', 
-                        maxHeight: (isMobile || imageAspectRatio === 'landscape') ? '60vh' : '100%',
-                        objectFit: 'contain' 
+                        height: '100%',
+                        objectFit: 'contain',
+                        display: 'block',
+                        cursor: 'zoom-in'
                       }}
                       width="100%"
-                      preview={isMobile ? { maskClassName: 'mobile-hidden-mask' } : undefined}
+                      height="100%"
+                      wrapperStyle={{ width: '100%', height: '100%', display: 'block' }}
+                      preview={{ maskClassName: 'mobile-hidden-mask' }}
                     />
                   </div>
                   {/* Image Navigation */}
                   {currentPreviewData.images.length > 1 && (
-                    <div style={{ 
-                      position: 'absolute',
-                      bottom: 20,
-                      left: 0,
-                      width: '100%', 
-                      display: 'flex', 
-                      justifyContent: 'center',
-                      zIndex: 10,
-                      pointerEvents: 'none'
-                    }}>
-                      <div style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: 12, 
-                        background: 'rgba(0,0,0,0.5)', 
-                        backdropFilter: 'blur(4px)',
-                        borderRadius: 18, 
-                        padding: '6px 12px',
-                        pointerEvents: 'auto'
+                    <>
+                      <div style={{
+                        position: 'absolute',
+                        top: isMobile ? 16 : 18,
+                        left: isMobile ? 16 : 18,
+                        zIndex: 10,
+                        padding: '4px 10px',
+                        borderRadius: 10,
+                        background: 'rgba(255,255,255,0.92)',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                        color: COLORS.text,
+                        fontSize: 13,
+                        fontWeight: 700
                       }}>
-                        <div 
-                          style={{ 
-                            width: 32, height: 32, borderRadius: '50%',
-                            background: 'rgba(255,255,255,0.12)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            cursor: 'pointer', color: '#fff'
-                          }}
-                          onClick={() => setPreviewImageIndex(prev => (prev - 1 + currentPreviewData.images.length) % currentPreviewData.images.length)}
-                        >
-                          <LeftOutlined style={{ fontSize: 16 }} />
-                        </div>
-                        <div style={{ color: '#fff', fontSize: 12, minWidth: 52, textAlign: 'center' }}>
-                          {previewImageIndex + 1} / {currentPreviewData.images.length}
-                        </div>
-                        <div 
-                          style={{ 
-                            width: 32, height: 32, borderRadius: '50%',
-                            background: 'rgba(255,255,255,0.12)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            cursor: 'pointer', color: '#fff'
-                          }}
-                          onClick={() => setPreviewImageIndex(prev => (prev + 1) % currentPreviewData.images.length)}
-                        >
-                          <RightOutlined style={{ fontSize: 16 }} />
-                        </div>
+                        {previewImageIndex + 1} / {currentPreviewData.images.length}
                       </div>
-                    </div>
+                      <Button
+                        shape="circle"
+                        icon={<LeftOutlined />}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setPreviewImageIndex(prev => (prev - 1 + currentPreviewData.images.length) % currentPreviewData.images.length);
+                        }}
+                        style={{
+                          position: 'absolute',
+                          left: isMobile ? 16 : 20,
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          zIndex: 10,
+                          width: 42,
+                          height: 42,
+                          borderColor: '#F0E7E7',
+                          background: 'rgba(255,255,255,0.92)',
+                          color: COLORS.text,
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
+                        }}
+                      />
+                      <Button
+                        shape="circle"
+                        icon={<RightOutlined />}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setPreviewImageIndex(prev => (prev + 1) % currentPreviewData.images.length);
+                        }}
+                        style={{
+                          position: 'absolute',
+                          right: isMobile ? 16 : 20,
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          zIndex: 10,
+                          width: 42,
+                          height: 42,
+                          borderColor: '#F0E7E7',
+                          background: 'rgba(255,255,255,0.92)',
+                          color: COLORS.text,
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
+                        }}
+                      />
+                    </>
                   )}
                 </>
               ) : (
@@ -2019,63 +1997,107 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
               flex: 1, 
               display: 'flex', 
               flexDirection: 'column',
-              padding: isMobile ? 20 : 32,
-              overflowY: 'auto',
-              background: COLORS.bg
+              minWidth: 0,
+              minHeight: 0,
+              overflow: 'hidden',
+              background: '#fff'
             }}>
               {/* Header */}
-              <div style={{ marginBottom: 20 }}>
+              <div style={{
+                padding: isMobile ? '28px 24px 20px' : '28px 32px 22px',
+                paddingRight: isMobile ? 64 : 72,
+                borderBottom: '1px solid #F5F1F1',
+                flexShrink: 0
+              }}>
                 <Space style={{ marginBottom: 8 }} wrap>
-                  {!isPromptManagerSource && (
-                    <Tag color="volcano" style={{ borderRadius: 8 }}>{previewPrompt.sectionTitle}</Tag>
-                  )}
+                  <Tag color={isPromptManagerSource ? 'blue' : 'volcano'} style={{ borderRadius: 8 }}>
+                    {isPromptManagerSource ? 'Prompt-Manager' : previewPrompt.sectionTitle}
+                  </Tag>
                   {favorites.includes(previewPrompt.id) && <Tag color="gold" icon={<StarFilled />} style={{ borderRadius: 8 }}>已收藏</Tag>}
                   {isNewItem(previewPrompt) && <Tag color={COLORS.new} style={{ borderRadius: 8 }}>NEW</Tag>}
                 </Space>
-                <Title level={isMobile ? 4 : 3} style={{ margin: 0, color: COLORS.text }}>{previewPrompt.title}</Title>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
-                  <Space>
-                    <Avatar size="small" icon={<UserOutlined />} style={{ backgroundColor: COLORS.secondary }} />
-                    <div 
-                      onClick={(e) => handleContributorClick(e, currentPreviewData.contributor)}
-                      style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                      className="contributor-link"
-                    >
-                      <Text type="secondary" style={{ transition: 'color 0.2s' }}>
-                        {currentPreviewData.contributor || '匿名贡献者'}
-                      </Text>
-                      <RightOutlined style={{ fontSize: 10, marginLeft: 4, color: COLORS.textLight }} />
-                    </div>
-                  </Space>
-                  {previewTimeLabel && (
-                    <Text type="secondary" style={{ fontSize: 12, color: COLORS.textLight }}>
-                      {previewTimeLabel}
-                    </Text>
-                  )}
-                </div>
+                <Title level={isMobile ? 3 : 2} style={{ margin: 0, color: COLORS.text, lineHeight: 1.25, wordBreak: 'break-word' }}>{previewPrompt.title}</Title>
+                {previewTimeLabel && (
+                  <Text type="secondary" style={{ display: 'block', marginTop: 10, fontSize: 13, color: COLORS.textLight }}>
+                    {previewTimeLabel}
+                  </Text>
+                )}
               </div>
 
-              {/* Variants Tabs */}
-              {previewPrompt.similar && previewPrompt.similar.length > 0 && (
-                <div style={{ marginBottom: 16 }}>
-                  <Tabs 
-                    activeKey={activeVariantIndex.toString()}
-                    onChange={(k) => {
-                      setActiveVariantIndex(parseInt(k));
-                      setPreviewImageIndex(0);
-                    }}
-                    type="card"
-                    size="small"
-                    items={[
-                      { label: '主提示词', key: '0' },
-                      ...previewPrompt.similar.map((_, i) => ({ label: `变体 ${i + 1}`, key: (i + 1).toString() }))
-                    ]}
-                  />
+              <div style={{
+                flex: 1,
+                minHeight: 0,
+                overflowY: 'auto',
+                padding: isMobile ? '24px 24px 20px' : '24px 32px',
+                background: '#fff'
+              }}>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, minmax(0, 1fr))',
+                  gap: 14,
+                  marginBottom: 18
+                }}>
+                  <div style={{
+                    border: '1px solid #F1ECEC',
+                    borderRadius: 16,
+                    background: '#FCFCFC',
+                    padding: '16px 18px'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: COLORS.textLight, fontSize: 13, marginBottom: 10 }}>
+                      <UserOutlined />
+                      <span>投稿者</span>
+                    </div>
+                    <div
+                      onClick={(e) => handleContributorClick(e, currentPreviewData.contributor)}
+                      style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', minWidth: 0 }}
+                      className="contributor-link"
+                    >
+                      <Text strong style={{ fontSize: 15, color: COLORS.text, wordBreak: 'break-all' }}>
+                        {currentPreviewData.contributor || '匿名贡献者'}
+                      </Text>
+                      <RightOutlined style={{ fontSize: 10, marginLeft: 6, color: COLORS.textLight, flexShrink: 0 }} />
+                    </div>
+                    <div style={{ marginTop: 6, color: COLORS.textLight, fontSize: 12 }}>contributor</div>
+                  </div>
+                  <div style={{
+                    border: '1px solid #F1ECEC',
+                    borderRadius: 16,
+                    background: '#FCFCFC',
+                    padding: '16px 18px'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: COLORS.textLight, fontSize: 13, marginBottom: 10 }}>
+                      <AppstoreFilled />
+                      <span>{isPromptManagerSource ? '来源' : '大分类'}</span>
+                    </div>
+                    <Text strong style={{ display: 'block', fontSize: 15, color: COLORS.text, wordBreak: 'break-word' }}>
+                      {isPromptManagerSource ? 'Prompt-Manager' : previewPrompt.sectionTitle}
+                    </Text>
+                    <div style={{ marginTop: 6, color: COLORS.textLight, fontSize: 12, wordBreak: 'break-all' }}>
+                      {isPromptManagerSource ? 'prompt-manager' : previewPrompt.sectionId}
+                    </div>
+                  </div>
                 </div>
-              )}
 
-              {/* Content Box */}
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {/* Variants Tabs */}
+                {previewPrompt.similar && previewPrompt.similar.length > 0 && (
+                  <div style={{ marginBottom: 16 }}>
+                    <Tabs 
+                      activeKey={activeVariantIndex.toString()}
+                      onChange={(k) => {
+                        setActiveVariantIndex(parseInt(k));
+                        setPreviewImageIndex(0);
+                      }}
+                      type="card"
+                      size="small"
+                      items={[
+                        { label: '主提示词', key: '0' },
+                        ...previewPrompt.similar.map((_, i) => ({ label: `变体 ${i + 1}`, key: (i + 1).toString() }))
+                      ]}
+                    />
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 {currentPreviewData.notes && (
                   <div style={{ 
                     background: '#FFFBE6', 
@@ -2095,8 +2117,8 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
                   <div style={{ 
                     background: '#fff', 
                     borderRadius: 16,
-                    border: `1px solid ${COLORS.accent}`,
-                    padding: '10px 12px',
+                    border: '1px solid #F1ECEC',
+                    padding: '12px 14px',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: 8
@@ -2136,10 +2158,9 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
                 <div style={{ 
                   background: '#fff', 
                   borderRadius: 16, 
-                  border: `1px solid ${COLORS.accent}`,
-                  boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)',
-                  flex: 1,
-                  maxHeight: isMobile ? 200 : 300,
+                  border: '1px solid #F1ECEC',
+                  boxShadow: '0 1px 0 rgba(93,64,55,0.03)',
+                  maxHeight: isMobile ? 'none' : 300,
                   display: 'flex',
                   flexDirection: 'column',
                   overflow: 'hidden'
@@ -2180,20 +2201,30 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
                 </div>
 
                 {/* Tags */}
-                <div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {previewPrompt.tags?.map(tag => (
-                      <Tag key={tag} style={{ 
-                        padding: '4px 10px', fontSize: 12, borderRadius: 10, 
-                        border: 'none', background: '#fff', color: COLORS.textLight 
-                      }}>#{tag}</Tag>
-                    ))}
+                {previewPrompt.tags && previewPrompt.tags.length > 0 && (
+                  <div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {previewPrompt.tags.map(tag => (
+                        <Tag key={tag} style={{ 
+                          padding: '4px 10px', fontSize: 12, borderRadius: 10, 
+                          border: '1px solid #F1ECEC', background: '#fff', color: COLORS.textLight 
+                        }}>#{tag}</Tag>
+                      ))}
+                    </div>
                   </div>
+                )}
                 </div>
               </div>
 
               {/* Actions Footer */}
-              <div style={{ display: 'flex', gap: 12, marginTop: 24, paddingTop: 16, borderTop: `1px solid ${COLORS.accent}` }}>
+              <div style={{
+                display: 'flex',
+                gap: 12,
+                padding: isMobile ? '16px 24px max(16px, env(safe-area-inset-bottom))' : '18px 32px',
+                borderTop: '1px solid #F5F1F1',
+                background: '#fff',
+                flexShrink: 0
+              }}>
                 <Button 
                   type="primary" 
                   size="large" 
