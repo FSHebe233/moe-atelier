@@ -2004,23 +2004,35 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
             }}>
               {/* Header */}
               <div style={{
-                padding: isMobile ? '28px 24px 20px' : '28px 32px 22px',
+                padding: isMobile ? '22px 24px 18px' : '22px 32px 20px',
                 paddingRight: isMobile ? 64 : 72,
                 borderBottom: '1px solid #F5F1F1',
                 flexShrink: 0
               }}>
-                <Space style={{ marginBottom: 8 }} wrap>
-                  <Tag color={isPromptManagerSource ? 'blue' : 'volcano'} style={{ borderRadius: 8 }}>
-                    {isPromptManagerSource ? 'Prompt-Manager' : previewPrompt.sectionTitle}
-                  </Tag>
-                  {favorites.includes(previewPrompt.id) && <Tag color="gold" icon={<StarFilled />} style={{ borderRadius: 8 }}>已收藏</Tag>}
-                  {isNewItem(previewPrompt) && <Tag color={COLORS.new} style={{ borderRadius: 8 }}>NEW</Tag>}
-                </Space>
-                <Title level={isMobile ? 3 : 2} style={{ margin: 0, color: COLORS.text, lineHeight: 1.25, wordBreak: 'break-word' }}>{previewPrompt.title}</Title>
-                {previewTimeLabel && (
-                  <Text type="secondary" style={{ display: 'block', marginTop: 10, fontSize: 13, color: COLORS.textLight }}>
-                    {previewTimeLabel}
-                  </Text>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <Title level={isMobile ? 3 : 2} style={{ margin: 0, color: COLORS.text, lineHeight: 1.25, wordBreak: 'break-word', flex: '0 1 auto', minWidth: 0 }}>{previewPrompt.title}</Title>
+                  {isNewItem(previewPrompt) && <Tag color={COLORS.new} style={{ borderRadius: 8, marginInlineEnd: 0 }}>NEW</Tag>}
+                </div>
+                {(favorites.includes(previewPrompt.id) || previewTimeLabel) && (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 12,
+                    marginTop: 10,
+                    minHeight: 24
+                  }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      {previewTimeLabel && (
+                        <Text type="secondary" style={{ fontSize: 13, color: COLORS.textLight, whiteSpace: 'nowrap' }}>
+                          {previewTimeLabel}
+                        </Text>
+                      )}
+                    </div>
+                    <Space size={6} wrap style={{ justifyContent: 'flex-end', flexShrink: 0 }}>
+                      {favorites.includes(previewPrompt.id) && <Tag color="gold" icon={<StarFilled />} style={{ borderRadius: 8, marginInlineEnd: 0 }}>已收藏</Tag>}
+                    </Space>
+                  </div>
                 )}
               </div>
 
@@ -2067,7 +2079,7 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: COLORS.textLight, fontSize: 13, marginBottom: 10 }}>
                       <AppstoreFilled />
-                      <span>{isPromptManagerSource ? '来源' : '大分类'}</span>
+                      <span>{isPromptManagerSource ? '来源' : '分类'}</span>
                     </div>
                     <Text strong style={{ display: 'block', fontSize: 15, color: COLORS.text, wordBreak: 'break-word' }}>
                       {isPromptManagerSource ? 'Prompt-Manager' : previewPrompt.sectionTitle}
