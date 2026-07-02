@@ -1302,6 +1302,12 @@ function App() {
           colorBgBase: '#FFF9FA',
           borderRadius: 20,
           fontFamily: "'Nunito', 'Quicksand', sans-serif",
+          motionDurationFast: '0.18s',
+          motionDurationMid: '0.24s',
+          motionDurationSlow: '0.35s',
+          motionEaseOut: 'cubic-bezier(0.25, 1, 0.5, 1)',
+          motionEaseInOut: 'cubic-bezier(0.45, 0, 0.55, 1)',
+          motionEaseOutBack: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
         },
         components: {
           Button: {
@@ -1456,6 +1462,8 @@ function App() {
         </Header>
 
 	        <Content
+	          key={workspaceMode}
+	          className="view-enter"
 	          style={
 	            workspaceMode === 'workflow'
 	              ? { padding: 0, width: '100%', minHeight: 'calc(100vh - 72px)' }

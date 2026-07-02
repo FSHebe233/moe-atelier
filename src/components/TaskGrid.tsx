@@ -69,6 +69,7 @@ const SortableTaskItem = ({
     useSortable({
       id: task.id,
       animateLayoutChanges,
+      transition: { duration: 240, easing: 'cubic-bezier(0.25, 1, 0.5, 1)' },
     });
 
   const style = {
@@ -161,7 +162,7 @@ const TaskGrid: React.FC<TaskGridProps> = ({
 
   const dropAnimation: DropAnimation = {
     duration: 300,
-    easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
+    easing: 'cubic-bezier(0.25, 1, 0.5, 1)',
     sideEffects: (args) => {
       const { dragOverlay } = args;
       const defaultFn = defaultDropAnimationSideEffects({
@@ -176,8 +177,8 @@ const TaskGrid: React.FC<TaskGridProps> = ({
       const inner = dragOverlay.node.querySelector('.drag-overlay-item');
       if (inner) {
         inner.animate([{ transform: 'scale(1.02)' }, { transform: 'scale(1)' }], {
-          duration: 300,
-          easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
+          duration: 250,
+          easing: 'cubic-bezier(0.25, 1, 0.5, 1)',
           fill: 'forwards',
         });
       }

@@ -801,7 +801,7 @@ const CollectionBox: React.FC<CollectionBoxProps> = ({
                   style={{
                     fontSize: 16,
                     transform: visible ? 'rotate(180deg)' : 'rotate(0deg)',
-                    transition: 'transform 0.3s ease',
+                    transition: 'transform var(--dur-base) var(--ease-out-quart)',
                   }}
                 />
               </div>

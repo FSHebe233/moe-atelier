@@ -91,7 +91,7 @@ const CutePagination: React.FC<PaginationProps> = ({ current, total, pageSize, o
               justifyContent: 'center',
               borderRadius: '50%',
               cursor: 'pointer',
-              transition: 'all 0.2s',
+              transition: 'background var(--dur-fast) var(--ease-out-quart), color var(--dur-fast) var(--ease-out-quart), transform var(--dur-fast) var(--ease-out-quart)',
               color: COLORS.text,
               fontSize: 13,
               fontWeight: 500
@@ -124,7 +124,7 @@ const CutePagination: React.FC<PaginationProps> = ({ current, total, pageSize, o
       >
         <span 
           className="cute-pagination-ellipsis" 
-          style={{ cursor: 'pointer', userSelect: 'none', padding: '0 4px', transition: 'color 0.2s' }}
+          style={{ cursor: 'pointer', userSelect: 'none', padding: '0 4px', transition: 'color var(--dur-fast) var(--ease-out-quart)' }}
           onMouseEnter={(e) => e.currentTarget.style.color = COLORS.primary}
           onMouseLeave={(e) => e.currentTarget.style.color = COLORS.secondary}
         >
@@ -254,7 +254,7 @@ const PromptCard: React.FC<PromptCardProps> = ({
                     objectFit: 'cover',
                     opacity: activeImageIndex === idx ? 1 : 0,
                     filter: (isNSFW(prompt) && !revealedImages.has(prompt.id)) ? 'blur(20px)' : 'none',
-                    transition: 'opacity 0.5s ease-in-out, filter 0.3s ease',
+                    transition: 'opacity var(--dur-slower) var(--ease-in-out-smooth), filter var(--dur-base) var(--ease-out-quart)',
                     zIndex: activeImageIndex === idx ? 1 : 0
                   }}
                   loading="lazy"
@@ -376,7 +376,7 @@ const PromptCard: React.FC<PromptCardProps> = ({
                   height: 4,
                   borderRadius: 2,
                   background: idx === activeImageIndex ? '#fff' : 'rgba(255,255,255,0.6)',
-                  transition: 'all 0.3s ease',
+                  transition: 'width var(--dur-base) var(--ease-out-quart), background var(--dur-base) var(--ease-out-quart)',
                   boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
                 }}
               />
@@ -425,7 +425,7 @@ const PromptCard: React.FC<PromptCardProps> = ({
             className="contributor-tag"
           >
             <Avatar size={20} icon={<UserOutlined />} style={{ backgroundColor: COLORS.secondary, flexShrink: 0 }} />
-            <Text type="secondary" style={{ fontSize: 12, marginLeft: 6, color: COLORS.textLight, transition: 'color 0.2s' }} ellipsis>
+            <Text type="secondary" style={{ fontSize: 12, marginLeft: 6, color: COLORS.textLight, transition: 'color var(--dur-fast) var(--ease-out-quart)' }} ellipsis>
               {prompt.contributor || '匿名'}
             </Text>
           </div>
@@ -1082,6 +1082,21 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
     return formatPromptTime(previewPrompt);
   }, [previewPrompt]);
 
+  const previewImageCount = currentPreviewData?.images.length ?? 0;
+  const hasMultiplePreviewImages = previewImageCount > 1;
+
+  const showPreviousPreviewImage = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (previewImageCount <= 1) return;
+    setPreviewImageIndex(prev => (prev - 1 + previewImageCount) % previewImageCount);
+  };
+
+  const showNextPreviewImage = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (previewImageCount <= 1) return;
+    setPreviewImageIndex(prev => (prev + 1) % previewImageCount);
+  };
+
   const renderContributorSidebar = () => (
     <div style={{ 
       display: 'flex', flexDirection: 'column', gap: 24,
@@ -1366,7 +1381,7 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
                 opacity: (mobileSearchVisible || mobileSourceVisible) ? 1 : 0,
                 marginTop: (mobileSearchVisible || mobileSourceVisible) ? 12 : 0,
                 overflow: 'hidden',
-                transition: 'all 0.3s ease',
+                transition: 'height var(--dur-base) var(--ease-out-quart), opacity var(--dur-base) var(--ease-out-quart), margin-top var(--dur-base) var(--ease-out-quart)',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: mobileSourceVisible ? 'flex-start' : 'center',
@@ -1502,7 +1517,7 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
             background: 'rgba(255,255,255,0.9)',
             borderBottom: `1px solid ${COLORS.accent}`,
             backdropFilter: 'blur(10px)',
-            transition: 'height 0.3s ease',
+            transition: 'height var(--dur-base) var(--ease-out-quart)',
             alignItems: isMobile ? 'flex-start' : 'center'
           }
         }}
@@ -1579,7 +1594,7 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
               zIndex: 100,
               opacity: isFabVisible ? 1 : 0,
               pointerEvents: isFabVisible ? 'auto' : 'none',
-              transition: 'opacity 0.3s ease'
+              transition: 'opacity var(--dur-base) var(--ease-out-quart)'
             }}>
               <Tooltip title="投稿提示词" placement="left">
                 <Button
@@ -1896,37 +1911,58 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
               display: 'flex', 
               flexDirection: 'column',
               alignItems: 'center', 
-              justifyContent: 'center',
+              justifyContent: 'stretch',
               position: 'relative',
               overflow: 'hidden',
-              height: isMobile ? '42dvh' : '100%',
-              minHeight: isMobile ? 260 : 0,
-              maxHeight: isMobile ? 460 : 'unset',
+              height: isMobile ? 'auto' : '100%',
+              minHeight: isMobile ? 0 : 0,
+              maxHeight: isMobile ? 'none' : 'unset',
               width: isMobile ? '100%' : 'auto',
               borderRight: isMobile ? 'none' : '1px solid #F5F1F1',
               borderBottom: isMobile ? '1px solid #F5F1F1' : 'none'
             }}>
               {currentPreviewData.images.length > 0 ? (
                 <>
-                  <div style={{ width: '100%', height: '100%', minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-                    <Image
-                      src={currentPreviewData.images[previewImageIndex]}
-                      style={{ 
-                        width: '100%', 
-                        height: '100%',
-                        objectFit: 'contain',
-                        display: 'block',
-                        cursor: 'zoom-in'
+                  <div
+                    className="prompt-detail-main-image-frame"
+                    style={{
+                      width: '100%',
+                      height: isMobile ? '34dvh' : '100%',
+                      minHeight: isMobile ? 220 : 0,
+                      maxHeight: isMobile ? 360 : 'none',
+                      flex: isMobile ? '0 0 auto' : '1 1 auto',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      background: '#fff'
+                    }}
+                  >
+                    <Image.PreviewGroup
+                      items={currentPreviewData.images}
+                      preview={{
+                        current: previewImageIndex,
+                        onChange: (current) => setPreviewImageIndex(current)
                       }}
-                      width="100%"
-                      height="100%"
-                      wrapperStyle={{ width: '100%', height: '100%', display: 'block' }}
-                      preview={{ maskClassName: 'mobile-hidden-mask' }}
-                    />
-                  </div>
-                  {/* Image Navigation */}
-                  {currentPreviewData.images.length > 1 && (
-                    <>
+                    >
+                      <Image
+                        src={currentPreviewData.images[previewImageIndex]}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'contain',
+                          display: 'block',
+                          cursor: 'zoom-in'
+                        }}
+                        width="100%"
+                        height="100%"
+                        wrapperStyle={{ width: '100%', height: '100%', display: 'block' }}
+                      />
+                    </Image.PreviewGroup>
+
+                    {hasMultiplePreviewImages && (
+                      <>
                       <div style={{
                         position: 'absolute',
                         top: isMobile ? 16 : 18,
@@ -1942,50 +1978,126 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
                       }}>
                         {previewImageIndex + 1} / {currentPreviewData.images.length}
                       </div>
-                      <Button
-                        shape="circle"
-                        icon={<LeftOutlined />}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          setPreviewImageIndex(prev => (prev - 1 + currentPreviewData.images.length) % currentPreviewData.images.length);
-                        }}
+                      <button
+                        type="button"
+                        aria-label="上一张"
+                        onClick={showPreviousPreviewImage}
                         style={{
                           position: 'absolute',
                           left: isMobile ? 16 : 20,
                           top: '50%',
                           transform: 'translateY(-50%)',
-                          zIndex: 10,
-                          width: 42,
-                          height: 42,
-                          borderColor: '#F0E7E7',
-                          background: 'rgba(255,255,255,0.92)',
+                          zIndex: 30,
+                          width: isMobile ? 40 : 46,
+                          height: isMobile ? 40 : 46,
+                          border: '1px solid #E8DEDE',
+                          borderRadius: '50%',
+                          background: 'rgba(255,255,255,0.96)',
                           color: COLORS.text,
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
+                          boxShadow: '0 6px 18px rgba(0,0,0,0.12)',
+                          pointerEvents: 'auto',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: 0,
+                          cursor: 'pointer'
                         }}
-                      />
-                      <Button
-                        shape="circle"
-                        icon={<RightOutlined />}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          setPreviewImageIndex(prev => (prev + 1) % currentPreviewData.images.length);
-                        }}
+                      >
+                        <LeftOutlined />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="下一张"
+                        onClick={showNextPreviewImage}
                         style={{
                           position: 'absolute',
                           right: isMobile ? 16 : 20,
                           top: '50%',
                           transform: 'translateY(-50%)',
-                          zIndex: 10,
-                          width: 42,
-                          height: 42,
-                          borderColor: '#F0E7E7',
-                          background: 'rgba(255,255,255,0.92)',
+                          zIndex: 30,
+                          width: isMobile ? 40 : 46,
+                          height: isMobile ? 40 : 46,
+                          border: '1px solid #E8DEDE',
+                          borderRadius: '50%',
+                          background: 'rgba(255,255,255,0.96)',
                           color: COLORS.text,
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
+                          boxShadow: '0 6px 18px rgba(0,0,0,0.12)',
+                          pointerEvents: 'auto',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: 0,
+                          cursor: 'pointer'
                         }}
-                      />
-                    </>
-                  )}
+                      >
+                        <RightOutlined />
+                      </button>
+                      </>
+                    )}
+                  </div>
+
+	                  {hasMultiplePreviewImages && isMobile && (
+	                    <div style={{
+	                      width: '100%',
+	                      height: 68,
+	                      flexShrink: 0,
+	                      display: 'flex',
+	                      alignItems: 'center',
+	                      justifyContent: 'center',
+	                      overflow: 'hidden',
+	                      borderTop: '1px solid #F5F1F1',
+	                      background: '#fff'
+	                    }}>
+	                      <div style={{
+	                        width: 'calc(100% - 48px)',
+	                        height: 56,
+	                        display: 'flex',
+	                        alignItems: 'center',
+	                        gap: 10,
+	                        overflowX: 'auto',
+	                        overflowY: 'hidden',
+	                        margin: '0 24px'
+	                      }}>
+	                        {currentPreviewData.images.map((src, index) => {
+	                          const active = index === previewImageIndex;
+	                          return (
+	                            <button
+	                              key={`${src}-${index}`}
+	                              type="button"
+	                              onClick={(event) => {
+	                                event.stopPropagation();
+	                                setPreviewImageIndex(index);
+	                              }}
+	                              style={{
+	                                width: 56,
+	                                height: 56,
+	                                flex: '0 0 auto',
+	                                padding: 0,
+	                                boxSizing: 'border-box',
+	                                borderRadius: 10,
+	                                overflow: 'hidden',
+	                                border: active ? `2px solid ${COLORS.text}` : '2px solid transparent',
+	                                background: '#fff',
+	                                opacity: active ? 1 : 0.7,
+	                                boxShadow: active ? '0 4px 12px rgba(0,0,0,0.12)' : 'none',
+	                                cursor: 'pointer',
+	                                transition: 'opacity 0.2s, border-color 0.2s, box-shadow 0.2s'
+	                              }}
+	                              aria-label={`切换到第 ${index + 1} 张`}
+	                              aria-current={active}
+	                            >
+	                              <img
+	                                src={src}
+	                                alt=""
+	                                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+	                                draggable={false}
+	                              />
+	                            </button>
+	                          );
+	                        })}
+	                      </div>
+	                    </div>
+	                  )}
                 </>
               ) : (
                 <Empty description="暂无预览图" image={Empty.PRESENTED_IMAGE_SIMPLE} />
@@ -2045,15 +2157,16 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
               }}>
                 <div style={{
                   display: 'grid',
-                  gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, minmax(0, 1fr))',
-                  gap: 14,
+                  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                  gap: isMobile ? 10 : 14,
                   marginBottom: 18
                 }}>
                   <div style={{
                     border: '1px solid #F1ECEC',
                     borderRadius: 16,
                     background: '#FCFCFC',
-                    padding: '16px 18px'
+                    padding: isMobile ? '14px 12px' : '16px 18px',
+                    minWidth: 0
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: COLORS.textLight, fontSize: 13, marginBottom: 10 }}>
                       <UserOutlined />
@@ -2075,7 +2188,8 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
                     border: '1px solid #F1ECEC',
                     borderRadius: 16,
                     background: '#FCFCFC',
-                    padding: '16px 18px'
+                    padding: isMobile ? '14px 12px' : '16px 18px',
+                    minWidth: 0
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: COLORS.textLight, fontSize: 13, marginBottom: 10 }}>
                       <AppstoreFilled />
@@ -2367,6 +2481,24 @@ const PromptDrawer: React.FC<PromptDrawerProps> = ({ visible, onClose, onCreateT
         .contributor-link:hover .ant-typography {
           color: ${COLORS.primary} !important;
           text-decoration: underline;
+        }
+
+        .prompt-detail-main-image-frame .ant-image {
+          width: 100% !important;
+          height: 100% !important;
+          display: block !important;
+        }
+
+        .prompt-detail-main-image-frame .ant-image-img {
+          width: 100% !important;
+          height: 100% !important;
+          object-fit: contain !important;
+          display: block !important;
+        }
+
+        .prompt-detail-main-image-frame .ant-image-mask {
+          opacity: 0 !important;
+          background: transparent !important;
         }
 
         .mobile-hidden-mask {

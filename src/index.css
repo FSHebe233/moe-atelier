@@ -44,6 +44,18 @@
   --font-heading: 'ZCOOL KuaiLe', 'Nunito', sans-serif;
   --font-stack: 'Nunito', 'Quicksand', 'Varela Round', system-ui, -apple-system, sans-serif;
 
+  /* 动效 Token */
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);      /* 默认:hover/按钮/小位移 */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);       /* 大位移:抽屉/面板/视图切换 */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);     /* 仅 >=300ms 进场/强调动画 */
+  --ease-in-out-smooth: cubic-bezier(0.45, 0, 0.55, 1); /* 循环/往返动画 */
+  --ease-in-quart: cubic-bezier(0.5, 0, 0.75, 0);       /* 退场专用 */
+  --dur-instant: 100ms;  /* active 按压反馈 */
+  --dur-fast: 180ms;     /* hover、小控件 */
+  --dur-base: 240ms;     /* 卡片、节点状态 */
+  --dur-slow: 350ms;     /* 抽屉/Modal/视图切换 */
+  --dur-slower: 500ms;   /* 进场 keyframes、强调 */
+
   /* 圆形点阵背景 */
   --moe-dot-bg-image:
     radial-gradient(var(--c-primary-light) 20%, transparent 20%),
@@ -92,7 +104,7 @@ body {
 
 /* 动画类 */
 .fade-in-up {
-  animation: fadeInUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: fadeInUp var(--dur-slower) var(--ease-spring) forwards;
   opacity: 0;
 }
 
@@ -101,11 +113,21 @@ body {
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+/* 视图切换进场 */
+.view-enter {
+  animation: viewEnter var(--dur-slow) var(--ease-out-expo);
+}
+
+@keyframes viewEnter {
+  from { opacity: 0; transform: translateY(8px) scale(0.995); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 /* 平滑展开/收起动画 - 使用 Grid 技巧 */
 .password-collapse-container {
   display: grid;
   grid-template-rows: 0fr;
-  transition: grid-template-rows 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), margin-top 0.3s ease;
+  transition: grid-template-rows var(--dur-slow) var(--ease-out-expo), margin-top var(--dur-slow) var(--ease-out-expo);
   overflow: hidden;
   margin-top: 0;
 }
@@ -123,7 +145,7 @@ body {
   border: 1px dashed #FF9EB5;
   padding: 0 12px;
   opacity: 0;
-  transition: opacity 0.3s ease, padding 0.3s ease;
+  transition: opacity var(--dur-slow) var(--ease-out-quart), padding var(--dur-slow) var(--ease-out-quart);
 }
 
 .password-collapse-container.open .password-content-wrapper {
@@ -132,7 +154,7 @@ body {
 }
 
 .hover-scale {
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform var(--dur-base) var(--ease-out-quart);
 }
 .hover-scale:hover {
   transform: scale(1.02);
@@ -145,7 +167,7 @@ body {
 }
 
 .drag-overlay-item {
-  animation: pop 0.2s cubic-bezier(0.18, 0.67, 0.6, 1.22) forwards;
+  animation: pop var(--dur-fast) var(--ease-out-quart) forwards;
   cursor: grabbing;
 }
 
@@ -263,7 +285,7 @@ body {
   border-radius: var(--radius-md);
   box-shadow: 0 8px 0 rgba(255, 158, 181, 0.15), 0 0 0 2px #fff, 0 4px 12px rgba(255, 158, 181, 0.1);
   border: 2px solid var(--c-primary-light);
-  transition: all 0.3s ease;
+  transition: transform var(--dur-base) var(--ease-out-quart), box-shadow var(--dur-base) var(--ease-out-quart);
   overflow: hidden;
 }
 
@@ -283,7 +305,7 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
   border-radius: 16px;
   border: 2px solid #FFF0F3;
   box-shadow: 0 4px 0 #FFE5A0, 0 8px 12px rgba(255, 158, 181, 0.1);
-  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform var(--dur-fast) var(--ease-out-quart), box-shadow var(--dur-fast) var(--ease-out-quart);
 }
 .moe-sticker:hover {
   transform: translateY(-2px);
@@ -322,7 +344,7 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
   justify-content: center;
   padding: 16px 12px;
   border-radius: var(--radius-md);
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform var(--dur-base) var(--ease-out-quart), box-shadow var(--dur-base) var(--ease-out-quart), border-color var(--dur-base) var(--ease-out-quart), background-color var(--dur-base) var(--ease-out-quart);
   background: #fff;
   border: 2px dashed #FFF0F3;
   position: relative;
@@ -375,7 +397,7 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
   align-items: center !important;
   justify-content: space-between !important;
   padding: 6px 14px !important; /* 稍微缩小一点点 */
-  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important; /* 平滑过渡 */
+  transition: transform var(--dur-fast) var(--ease-out-quart), box-shadow var(--dur-fast) var(--ease-out-quart), border-color var(--dur-fast) var(--ease-out-quart), color var(--dur-fast) var(--ease-out-quart), background-color var(--dur-fast) var(--ease-out-quart) !important;
   box-shadow: 0 6px 0 rgba(0,0,0,0.05) !important;
   position: relative !important;
   overflow: hidden !important;
@@ -395,7 +417,7 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
 }
 
 .moe-nav-btn.ant-btn:hover::before {
-  animation: button-shine 1.5s ease-in-out infinite;
+  animation: button-shine 1.5s var(--ease-in-out-smooth) infinite;
 }
 
 /* 导航按钮内容布局 */
@@ -453,7 +475,7 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
   align-items: center !important;
   justify-content: space-between !important;
   padding: 6px 14px !important; /* 稍微缩小一点点 */
-  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  transition: transform var(--dur-fast) var(--ease-out-quart), box-shadow var(--dur-fast) var(--ease-out-quart), border-color var(--dur-fast) var(--ease-out-quart), color var(--dur-fast) var(--ease-out-quart), background-color var(--dur-fast) var(--ease-out-quart) !important;
   box-shadow: 0 6px 0 rgba(0,0,0,0.05) !important;
   position: relative !important;
   overflow: hidden !important;
@@ -473,7 +495,7 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
 }
 
 .moe-nav-btn-secondary.ant-btn:hover::before {
-  animation: button-shine 1.5s ease-in-out infinite;
+  animation: button-shine 1.5s var(--ease-in-out-smooth) infinite;
 }
 
 .moe-nav-btn-secondary > span {
@@ -521,7 +543,7 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
   box-shadow: 0 6px 0 rgba(0,0,0,0.05) !important;
   height: auto !important;
   padding: 8px 20px !important;
-  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  transition: transform var(--dur-fast) var(--ease-out-quart), box-shadow var(--dur-fast) var(--ease-out-quart), border-color var(--dur-fast) var(--ease-out-quart), color var(--dur-fast) var(--ease-out-quart), background-color var(--dur-fast) var(--ease-out-quart) !important;
   position: relative !important;
   overflow: hidden !important;
 }
@@ -540,7 +562,7 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
 }
 
 .ant-btn:hover::before {
-  animation: button-shine 1.5s ease-in-out infinite;
+  animation: button-shine 1.5s var(--ease-in-out-smooth) infinite;
 }
 
 .ant-btn:active {
@@ -747,7 +769,7 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
   background: rgba(255, 255, 255, 0.96);
   font-weight: 800;
   cursor: pointer;
-  transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+  transition: background var(--dur-fast) var(--ease-out-quart), border-color var(--dur-fast) var(--ease-out-quart), box-shadow var(--dur-fast) var(--ease-out-quart);
 }
 
 .workflow-tab:hover {
@@ -771,7 +793,7 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
   justify-content: center;
   border-radius: 50%;
   opacity: 0;
-  transition: opacity 0.18s ease, background 0.18s ease;
+  transition: opacity var(--dur-fast) var(--ease-out-quart), background var(--dur-fast) var(--ease-out-quart);
 }
 
 .workflow-tab:hover .workflow-tab-close,
@@ -844,7 +866,7 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
   background: rgba(255, 255, 255, 0.96);
   box-shadow: var(--shadow-xs);
   cursor: pointer;
-  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+  transition: border-color var(--dur-fast) var(--ease-out-quart), box-shadow var(--dur-fast) var(--ease-out-quart), transform var(--dur-fast) var(--ease-out-quart);
 }
 
 .workflow-home-card:hover {
@@ -980,7 +1002,7 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.96);
   box-shadow: 0 8px 0 rgba(255, 158, 181, 0.14), 0 8px 24px rgba(255, 158, 181, 0.12);
-  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  transition: border-color var(--dur-fast) var(--ease-out-quart), box-shadow var(--dur-fast) var(--ease-out-quart);
 }
 
 .workflow-node.is-selected .workflow-node-inner {
@@ -1075,7 +1097,7 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
 
 .workflow-status-dot.status-loading {
   background: var(--c-warning-dark);
-  animation: workflow-pulse 1s ease-in-out infinite;
+  animation: workflow-pulse 1s var(--ease-in-out-smooth) infinite;
 }
 
 .workflow-status-dot.status-error {
@@ -1348,7 +1370,7 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
   color: var(--c-text-main);
   font-weight: 800;
   cursor: pointer;
-  transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+  transition: border-color var(--dur-fast) var(--ease-out-quart), color var(--dur-fast) var(--ease-out-quart), background var(--dur-fast) var(--ease-out-quart);
 }
 
 .workflow-setting-pill:hover,
@@ -1388,7 +1410,7 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
   z-index: 3;
   opacity: 0;
   transform: translateY(-4px);
-  transition: opacity 0.18s ease, transform 0.18s ease;
+  transition: opacity var(--dur-fast) var(--ease-out-quart), transform var(--dur-fast) var(--ease-out-quart);
 }
 
 .workflow-image-wrap:hover .workflow-image-actions {
@@ -1518,7 +1540,7 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
   box-shadow: 0 2px 8px rgba(255, 112, 144, 0.35);
   opacity: 0;
   transform: translate(-50%, -50%) scale(0.72);
-  transition: opacity 0.16s ease, transform 0.16s ease;
+  transition: opacity var(--dur-fast) var(--ease-out-quart), transform var(--dur-fast) var(--ease-out-quart);
 }
 
 .workflow-node:hover .workflow-handle::after,
@@ -1540,7 +1562,7 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
   cursor: pointer;
   pointer-events: auto;
   opacity: 0.82;
-  transition: opacity 0.16s ease;
+  transition: opacity var(--dur-fast) var(--ease-out-quart);
 }
 
 .workflow-connection-midpoint-hit {
@@ -1552,7 +1574,7 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
   stroke: var(--c-primary);
   stroke-width: 2px;
   filter: drop-shadow(0 1px 4px rgba(255, 112, 144, 0.22));
-  transition: r 0.16s ease, stroke-width 0.16s ease, fill 0.16s ease;
+  transition: r var(--dur-fast) var(--ease-out-quart), stroke-width var(--dur-fast) var(--ease-out-quart), fill var(--dur-fast) var(--ease-out-quart);
 }
 
 .workflow-connection-midpoint path {
@@ -1666,7 +1688,7 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
   font-size: 13px;
   font-weight: 800;
   cursor: pointer;
-  transition: background 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
+  transition: background var(--dur-fast) var(--ease-out-quart), color var(--dur-fast) var(--ease-out-quart), box-shadow var(--dur-fast) var(--ease-out-quart);
 }
 
 .workflow-background-option:hover {
@@ -2258,7 +2280,7 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
   padding: 0;
   cursor: pointer;
   font-family: inherit;
-  transition: color 0.16s ease, transform 0.16s ease;
+  transition: color var(--dur-fast) var(--ease-out-quart), transform var(--dur-fast) var(--ease-out-quart);
 }
 
 .novelai-inline-action:hover {
@@ -2338,7 +2360,7 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
 
 /* Collection Box 卡片样式 */
 .collection-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform var(--dur-fast) var(--ease-out-quart), box-shadow var(--dur-fast) var(--ease-out-quart);
 }
 
 .collection-card:hover {
@@ -2439,7 +2461,7 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
     0 -2px 8px rgba(138, 113, 118, 0.05),   /* Top subtle depth */
     inset 0 0 0 1px rgba(255,255,255,0.5);  /* Highlight rim */
   padding: 10px 10px 15px 10px; /* Reduced bottom padding */
-  animation: printOut 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  animation: printOut 0.8s var(--ease-out-quart) forwards;
   transform-origin: top center;
   position: relative;
   display: flex;
@@ -2469,7 +2491,7 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
 }
 
 .polaroid-dropping {
-  animation: dropOut 0.7s linear forwards !important;
+  animation: dropOut 0.5s var(--ease-in-quart) forwards !important;
   pointer-events: none;
 }
 
@@ -2491,7 +2513,7 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
   border-radius: 12px;
   border: 1px solid #F0EAD6;
   box-shadow: 0 4px 12px rgba(0,0,0,0.04), 0 8px 24px rgba(255, 158, 181, 0.08); /* 增加底部阴影 */
-  transition: all 0.3s ease;
+  transition: border-color var(--dur-base) var(--ease-out-quart), box-shadow var(--dur-base) var(--ease-out-quart);
   /* 保证内部文字可以滚动，同时为顶部和底部折叠效果留出空间 */
   overflow: hidden; 
 }
@@ -2611,9 +2633,19 @@ h1, h2, h3, h4, h5, h6, .ant-typography {
 }
 
 .api-select-running {
-  animation: api-selector-pulse 2s infinite !important;
+  animation: api-selector-pulse 2s var(--ease-in-out-smooth) infinite !important;
 }
 
 .api-select-dot-running {
-  animation: api-dot-blink 1s infinite !important;
+  animation: api-dot-blink 1s var(--ease-in-out-smooth) infinite !important;
+}
+
+/* 无障碍:尊重系统"减少动态效果"设置 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

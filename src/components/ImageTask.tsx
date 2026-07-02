@@ -2341,7 +2341,7 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, name, storageKey, config, bac
         borderColor: isDragOver ? '#FF9EB5' : undefined,
         borderStyle: isDragOver ? 'dashed' : undefined,
         borderWidth: isDragOver ? 2 : undefined,
-        transition: 'all 0.2s',
+        transition: 'transform var(--dur-base) var(--ease-out-quart), box-shadow var(--dur-base) var(--ease-out-quart), border-color var(--dur-fast) var(--ease-out-quart)',
         position: 'relative',
       }}
       onDragOver={handleDragOver}
@@ -2495,7 +2495,7 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, name, storageKey, config, bac
               alignItems: 'center',
               marginLeft: 4,
               height: 24,
-              transition: 'all 0.3s ease',
+              transition: 'background var(--dur-base) var(--ease-out-quart), border-color var(--dur-base) var(--ease-out-quart)',
             }}
           >
             <div 
@@ -2506,7 +2506,7 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, name, storageKey, config, bac
                 borderRadius: '50%', 
                 background: isGlobalLoading ? '#52C41A' : '#FF9EB5', 
                 margin: '0 0 0 8px',
-                transition: 'all 0.3s ease'
+                transition: 'background var(--dur-base) var(--ease-out-quart)'
               }} 
             />
 	            <Select
@@ -2968,7 +2968,7 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, name, storageKey, config, bac
                                   color: '#FF5252',
                                   fontSize: 14,
                                   cursor: 'pointer',
-                                  transition: 'all 0.2s',
+                                  transition: 'transform var(--dur-fast) var(--ease-out-quart), color var(--dur-fast) var(--ease-out-quart)',
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'center'
@@ -2983,7 +2983,7 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, name, storageKey, config, bac
                                 color: '#998888',
                                 fontSize: 14,
                                 cursor: 'pointer',
-                                transition: 'all 0.2s',
+                                transition: 'transform var(--dur-fast) var(--ease-out-quart), color var(--dur-fast) var(--ease-out-quart)',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center'
@@ -3010,7 +3010,7 @@ const ImageTask: React.FC<ImageTaskProps> = ({ id, name, storageKey, config, bac
                                   color: '#998888',
                                   fontSize: 14,
                                   cursor: 'pointer',
-                                  transition: 'all 0.2s',
+                                  transition: 'transform var(--dur-fast) var(--ease-out-quart), color var(--dur-fast) var(--ease-out-quart)',
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'center'

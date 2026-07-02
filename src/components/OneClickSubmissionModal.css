@@ -74,7 +74,7 @@
   background: #fff;
   box-shadow: 0 4px 12px rgba(255, 158, 181, 0.04);
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform var(--dur-base) var(--ease-out-quart), box-shadow var(--dur-base) var(--ease-out-quart), border-color var(--dur-base) var(--ease-out-quart), background var(--dur-base) var(--ease-out-quart);
 }
 
 .one-click-submission-task-option:hover {
@@ -101,7 +101,7 @@
   color: #FF9EB5;
   font-weight: bold;
   font-size: 14px;
-  transition: all 0.3s;
+  transition: background var(--dur-base) var(--ease-out-quart), color var(--dur-base) var(--ease-out-quart);
 }
 
 .one-click-submission-task-option.is-selected .one-click-submission-task-index {
@@ -160,7 +160,7 @@
   border: 2px solid #FFF0F3;
   border-radius: 16px;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: transform var(--dur-base) var(--ease-out-quart), box-shadow var(--dur-base) var(--ease-out-quart), border-color var(--dur-base) var(--ease-out-quart), background var(--dur-base) var(--ease-out-quart), color var(--dur-base) var(--ease-out-quart);
   text-align: left;
 }
 
@@ -188,7 +188,7 @@
   justify-content: center;
   font-weight: bold;
   font-size: 13px;
-  transition: all 0.3s;
+  transition: background var(--dur-base) var(--ease-out-quart), color var(--dur-base) var(--ease-out-quart);
   flex-shrink: 0;
 }
 
@@ -306,7 +306,7 @@
   color: #FF9EB5;
   background: #fff;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: transform var(--dur-base) var(--ease-out-quart), background var(--dur-base) var(--ease-out-quart), border-color var(--dur-base) var(--ease-out-quart);
   width: 100%;
 }
 
@@ -343,7 +343,7 @@
   right: 8px;
   z-index: 10;
   opacity: 0;
-  transition: opacity 0.3s;
+  transition: opacity var(--dur-base) var(--ease-out-quart);
   background: rgba(255, 255, 255, 0.9);
   border: none;
 }
