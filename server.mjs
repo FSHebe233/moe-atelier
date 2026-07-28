@@ -2164,6 +2164,24 @@ if (isProd) {
   })
 }
 
+httpServer.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(
+      `[server] Port ${port} is already in use. ` +
+        `Set a free port, e.g. PORT=${port + 1} npm run dev`,
+    )
+  } else if (err.code === 'EACCES') {
+    console.error(
+      `[server] No permission to bind port ${port}. ` +
+        `On Windows WSL2/Hyper-V this port may be reserved by the system. ` +
+        `Run "npm run start" to auto-pick a free port, or set PORT to a free one.`,
+    )
+  } else {
+    throw err
+  }
+  process.exit(1)
+})
+
 httpServer.listen(port, () => {
   console.log(`[server] http://localhost:${port} (${isProd ? 'prod' : 'dev'})`)
 })

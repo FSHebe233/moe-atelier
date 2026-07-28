@@ -3,3 +3,6 @@ saved-images/
 server-data/
 .env
 .claude/
+
+# Local debug notes (not part of the project)
+wsl2端口占用debug.txt
