@@ -94,7 +94,7 @@ npm run start
 ```bash
 PORT=8080 npm run start
 ```
-> 提示：运行 `npm run dev` / `npm run start` 会自动避开被系统保留（Windows WSL2/Hyper-V）或已被占用的端口，并选用空闲端口启动；若手动指定的 `PORT` 被占用，服务会打印清晰提示并以非零状态退出，而不会静默崩溃。
+> 提示：运行 `npm run dev` / `npm run start` 会自动避开被系统保留（Windows WSL2/Hyper-V）或已被占用的端口，并选用空闲端口启动。若直接以 `node server.mjs` 运行且指定的端口被占用，服务会自动尝试下一端口（最多 20 次）；若端口被系统保留（EACCES），则会自动挑选一个空闲端口重绑；两种情况都会打印清晰日志，而不会静默崩溃。
 
 如果用 Nginx/Caddy 反代到公网，请保证 HTTPS（因为要在浏览器里填写 API Key），并确保你的 OpenAI 兼容服务允许跨域访问。
 

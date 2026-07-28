@@ -19,6 +19,7 @@ import {
   coerceApiFormat,
   pickFormatConfig,
 } from './server/config.mjs'
+import { pickPort } from './scripts/port-select.mjs'
 import {
   logBackendOutbound,
   logBackendRequest,
@@ -2164,26 +2165,64 @@ if (isProd) {
   })
 }
 
+// 端口自动规避：被占用(EADDRINUSE)时顺延到下一端口；被保留/无权限(EACCES，常见于
+// Windows WSL2/Hyper-V 保留段)时改用 pickPort 跳过保留段后重绑。通过启动器
+// (scripts/start.mjs) 运行时 PORT 已是空闲端口，不会触发以下分支。
+const MAX_PORT_ATTEMPTS = 20
+let actualPort = port
+let portAttempt = 0
+
 httpServer.on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
+    if (portAttempt < MAX_PORT_ATTEMPTS) {
+      const nextPort = actualPort + 1
+      console.warn(
+        `[server] Port ${actualPort} is already in use, trying ${nextPort}...`,
+      )
+      actualPort = nextPort
+      portAttempt += 1
+      httpServer.listen(actualPort)
+      return
+    }
     console.error(
-      `[server] Port ${port} is already in use. ` +
-        `Set a free port, e.g. PORT=${port + 1} npm run dev`,
+      `[server] Could not bind a free port after ${MAX_PORT_ATTEMPTS} ` +
+        `attempts starting from ${port}. Set a free port, e.g. ` +
+        `PORT=${port + MAX_PORT_ATTEMPTS + 1} npm run dev`,
     )
   } else if (err.code === 'EACCES') {
-    console.error(
-      `[server] No permission to bind port ${port}. ` +
-        `On Windows WSL2/Hyper-V this port may be reserved by the system. ` +
-        `Run "npm run start" to auto-pick a free port, or set PORT to a free one.`,
+    console.warn(
+      `[server] No permission to bind port ${actualPort} ` +
+        `(on Windows WSL2/Hyper-V this port may be reserved by the system). ` +
+        `Falling back to auto-pick a free port...`,
     )
+    pickPort()
+      .then((freePort) => {
+        if (freePort) {
+          actualPort = freePort
+          httpServer.listen(actualPort)
+        } else {
+          console.error(
+            `[server] No free port available. Run "npm run start" or set ` +
+              `PORT to a free one.`,
+          )
+          process.exit(1)
+        }
+      })
+      .catch((e) => {
+        console.error(`[server] Failed to auto-pick a port:`, e)
+        process.exit(1)
+      })
+    return
   } else {
     throw err
   }
   process.exit(1)
 })
 
-httpServer.listen(port, () => {
-  console.log(`[server] http://localhost:${port} (${isProd ? 'prod' : 'dev'})`)
+httpServer.listen(actualPort, () => {
+  console.log(
+    `[server] http://localhost:${actualPort} (${isProd ? 'prod' : 'dev'})`,
+  )
 })
 
 
