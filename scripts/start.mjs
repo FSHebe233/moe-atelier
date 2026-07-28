@@ -1,16 +1,22 @@
 import { spawnSync } from 'node:child_process'
-import os from 'node:os'
+import { pickPort } from './port-select.mjs'
 
-// Cross-platform launcher.
-// - On Windows: delegate to start.ps1, which auto-picks a free port
-//   (avoiding WSL2/Hyper-V reserved ranges and already-listening ports).
-// - On other platforms: start the production server directly.
-const isWin = os.platform() === 'win32'
+// Universal launcher: auto-picks a free port (cross-platform, no PowerShell
+// dependency) and starts server.mjs with that port. Works for dev/preview/start.
+const mode = process.argv.includes('--dev') ? '--dev' : '--prod'
 
-const result = isWin
-  ? spawnSync('powershell', ['-ExecutionPolicy', 'Bypass', '-File', 'start.ps1'], {
-      stdio: 'inherit',
-    })
-  : spawnSync('node', ['server.mjs', '--prod'], { stdio: 'inherit' })
+const main = async () => {
+  const port = await pickPort()
+  if (!port) {
+    console.error('[start] No available port found!')
+    process.exit(1)
+  }
+  console.log(`[start] Selected port ${port} -> http://localhost:${port}`)
+  const result = spawnSync('node', ['server.mjs', mode], {
+    stdio: 'inherit',
+    env: { ...process.env, PORT: String(port) },
+  })
+  process.exit(result.status ?? 0)
+}
 
-process.exit(result.status ?? 0)
+main()

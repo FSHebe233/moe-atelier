@@ -4,11 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "node server.mjs --dev",
+    "dev": "node scripts/start.mjs --dev",
     "build": "tsc && vite build",
-    "preview": "node server.mjs --prod",
+    "preview": "node scripts/start.mjs --prod",
     "test:providers": "node scripts/verify-provider-requests.mjs",
-    "start": "node scripts/start.mjs"
+    "start": "node scripts/start.mjs --prod"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
