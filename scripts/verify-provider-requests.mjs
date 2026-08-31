@@ -90,6 +90,22 @@ assert.equal(
   vertexDefaultLocation.url,
   'https://us-central1-aiplatform.googleapis.com/v1/publishers/google/models/gemini-test:generateContent?key=test-key',
 );
+
+const vertexGlobalLocation = await buildGoogleGenerateRequest({
+  ...baseConfig,
+  apiFormat: 'vertex',
+  apiUrl: 'https://aiplatform.googleapis.com',
+  vertexAuthMode: 'json',
+  vertexProjectId: 'project-a',
+  vertexDefaultLocation: 'global',
+  vertexPublisher: 'google',
+  vertexAccessToken: 'ya29.token',
+});
+assert.equal(
+  vertexGlobalLocation.url,
+  'https://aiplatform.googleapis.com/v1beta1/projects/project-a/locations/global/publishers/google/models/gemini-test:generateContent',
+);
+
 assert.equal(coerceApiFormat('vertex-express'), 'vertex');
 
 const payload = buildGeminiPayload([{ role: 'user', parts: [{ text: 'draw' }] }], baseConfig);
