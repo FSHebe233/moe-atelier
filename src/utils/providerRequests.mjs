@@ -296,7 +296,7 @@ const applyModelPath = (segments, modelValue) => {
 };
 
 const setVertexOriginLocation = (origin, host, location) => {
-  if (!location || host !== 'aiplatform.googleapis.com') return origin;
+  if (!location || location === 'global' || host !== 'aiplatform.googleapis.com') return origin;
   return origin.replace('//aiplatform.googleapis.com', `//${location}-aiplatform.googleapis.com`);
 };
 
